@@ -1,5 +1,5 @@
 //
-//  UIColor+Dynamic.swift
+//  NSColor+Dynamic.swift
 //  ColorTokensKit
 //
 
