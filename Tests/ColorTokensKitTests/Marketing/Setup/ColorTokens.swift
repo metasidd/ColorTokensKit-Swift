@@ -7,7 +7,6 @@
 
 import SwiftUI
 import ColorTokensKit
-import UIKit
 
 public extension Color {
     // MARK: - Foreground colors

@@ -2,9 +2,7 @@ import Foundation
 import os
 import SwiftUI
 
-#if canImport(UIKit)
-import UIKit
-#endif
+import CoreImage
 
 /// Generates marketing assets for the README and documentation
 @MainActor
@@ -65,78 +63,16 @@ public struct MarketingAssets {
         saveImage(view, name: "pill-view", size: ImageSize.size, in: directory)
     }
     
-    private static func saveImage(_ view: some View, name: String, size: CGSize, in directory: URL) {
-        logger.debug("Rendering image: \(name) at size: \(size.width)x\(size.height)")
-
-        #if canImport(UIKit)
-        // Create and configure the hosting controller
-        let hostingController = UIHostingController(rootView: view)
-        hostingController.view.frame = CGRect(origin: .zero, size: size)
-        
-        // Create a new window for rendering
-        let window = UIWindow(frame: CGRect(origin: .zero, size: size))
-        window.rootViewController = hostingController
-        window.makeKeyAndVisible()
-        
-        // Force layout and render cycle
-        hostingController.view.setNeedsLayout()
-        hostingController.view.layoutIfNeeded()
-        
-        // Create a new graphics context
-        UIGraphicsBeginImageContextWithOptions(size, true, 0)
-        defer { UIGraphicsEndImageContext() }
-        
-        // Render the view into the graphics context
-        if let context = UIGraphicsGetCurrentContext() {
-            hostingController.view.layer.render(in: context)
-        }
-        
-        // Get the rendered image
-        guard let image = UIGraphicsGetImageFromCurrentImageContext(),
-              let pngData = image.pngData() else {
-            logger.error("Failed to create PNG representation for \(name)")
-            return
-        }
-
-        let fileURL = directory.appendingPathComponent("\(name).png")
-
-        do {
-            // Create intermediate directories if needed
-            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-            
-            // Write the file with file protection none to ensure we can overwrite
-            try pngData.write(to: fileURL, options: [.atomic, .completeFileProtection])
-            
-            // Set liberal permissions on both directory and file
-            try FileManager.default.setAttributes([.posixPermissions: 0o777], ofItemAtPath: directory.path)
-            try FileManager.default.setAttributes([.posixPermissions: 0o666], ofItemAtPath: fileURL.path)
-            
-            logger.info("Successfully saved \(name).png to: \(fileURL.path)")
-        } catch {
-            logger.error("Failed to save \(name).png: \(error.localizedDescription)")
-            
-            // Try alternate approach if first attempt failed
-            do {
-                // Try to save to a temporary file first
-                let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(name).png")
-                try pngData.write(to: tempURL)
-                
-                // Then move it to the final location
-                if FileManager.default.fileExists(atPath: fileURL.path) {
-                    try FileManager.default.removeItem(at: fileURL)
-                }
-                try FileManager.default.moveItem(at: tempURL, to: fileURL)
-                
-                // Set permissions after moving
-                try FileManager.default.setAttributes([.posixPermissions: 0o666], ofItemAtPath: fileURL.path)
-                
-                logger.info("Successfully saved \(name).png using alternate method")
-            } catch {
-                logger.error("All attempts to save \(name).png failed: \(error.localizedDescription)")
-            }
-        }
-        #else
-        logger.error("Image rendering is not supported on this platform.")
-        #endif
-    }
+	private static func saveImage(_ view: some View, name: String, size: CGSize, in directory: URL) {
+		do {
+			let someView = view.frame(width: size.width, height: size.height)
+			let renderer = ImageRenderer(content: someView)
+			let ciContext = CIContext()
+			let ciImage = CIImage(cgImage: renderer.cgImage!)
+			let destinationPath = directory.appendingPathComponent("\(name).png")
+			try ciContext.writePNGRepresentation(of: ciImage, to: destinationPath , format: .RGBA8, colorSpace: ciImage.colorSpace!)
+		} catch {
+			logger.error("Failed to save \(name) image: \(error.localizedDescription)")
+		}
+	}
 }
