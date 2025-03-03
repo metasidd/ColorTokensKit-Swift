@@ -53,7 +53,7 @@ public struct MarketingAssets {
     
     private static func generateSimpleCardViewDarkModeImage(in directory: URL) {
         logger.info("Generating simple card view image...")
-        let view = ThemedCardView().preferredColorScheme(.dark)
+        let view = ThemedCardView().colorScheme(.dark)
         saveImage(view, name: "simple-card-dark-mode-view", size: ImageSize.size, in: directory)
     }
 
