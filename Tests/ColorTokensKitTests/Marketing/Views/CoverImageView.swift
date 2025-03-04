@@ -39,8 +39,7 @@ struct CoverImageView: View {
         HStack(spacing: gridSpacing) {
             // Create a seed value based on both the first color's hue and the row index
             // This ensures each row has a different pattern even if hues are similar
-            let hueComponent = Int(colors.first?.h ?? 0) % 360
-            let patternSeed = hueComponent + (rowIndex * 73) // Using a prime number multiplier for better distribution
+            let patternSeed = (rowIndex * 23) + 73 // Using a prime number multiplier for better distribution
             
             let shuffledColors = deterministicShuffle(colors, seed: patternSeed)
             

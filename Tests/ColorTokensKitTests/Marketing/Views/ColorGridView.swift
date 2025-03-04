@@ -2,7 +2,7 @@ import ColorTokensKit
 import SwiftUI
 
 struct ColorGridView: View {
-    private let hueSteps = 18
+    private let hueSteps = 19
     
     private var colorRamps: [(name: String, color: LCHColor)] {
         // First, add the Gray color
