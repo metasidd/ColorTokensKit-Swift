@@ -86,7 +86,7 @@ And VOILA! You also now support dark mode out of the box.
 
 # 🎁 More examples for you to learn from
 
-## A Simple Card View ([Example Code](/Tests/ColorTokensKitTests/Marketing/Views/CardView.swift))
+## A Simple Card View
 
 This is a simple card view that uses the basic gray ramp without using any theming shenanigans.
 
