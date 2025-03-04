@@ -18,7 +18,7 @@ struct ColorGridView: View {
             // Create a color ramp generator and explicitly pass the hue
             let stops = generator.getColorRamp(forHue: hue)
             
-            let midPoint = stops[Int(stops.count / 2 - 1)]
+            let midPoint = stops[Int(stops.count / 2) - 1]
             
             // Add the original hue to the name for clarity
             return (
