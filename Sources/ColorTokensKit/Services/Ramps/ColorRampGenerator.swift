@@ -44,9 +44,9 @@ public class ColorRampGenerator {
             if isGrayscale {
                 return "gray-\(steps)"
             } else {
-                // For color ramps, normalize hue to 0-359 range
+                // For color ramps, normalize hue to 0-359 range with consistent precision
                 // This ensures consistent interpolation around the color wheel
-                let normalizedHue = targetHue.truncatingRemainder(dividingBy: 360)
+                let normalizedHue = (targetHue.truncatingRemainder(dividingBy: 360) * 100).rounded() / 100
                 return "H\(normalizedHue)-\(steps)"
             }
         }()
@@ -84,7 +84,14 @@ public class ColorRampGenerator {
 
         // Calculate interpolation factor with proper wrapping
         let hueDiff = (upperHue - lowerHue + 360).truncatingRemainder(dividingBy: 360)
-        let t = (targetHue - lowerHue + 360).truncatingRemainder(dividingBy: 360) / hueDiff
+        
+        // Normalize the target hue for consistent calculation
+        let normalizedTargetHue = (targetHue.truncatingRemainder(dividingBy: 360) * 100).rounded() / 100
+        let normalizedLowerHue = (lowerHue.truncatingRemainder(dividingBy: 360) * 100).rounded() / 100
+        
+        // Calculate t with consistent precision
+        let rawT = (normalizedTargetHue - normalizedLowerHue + 360).truncatingRemainder(dividingBy: 360) / hueDiff
+        let t = (rawT * 10000).rounded() / 10000
 
         // Interpolate between corresponding stops
         let result = interpolateStops(from: lowerRamp, to: upperRamp, t: t)
@@ -131,17 +138,21 @@ public class ColorRampGenerator {
         let stepSize = 1.0 / Double(ColorConstants.rampStops - 1)
 
         return (0 ..< ColorConstants.rampStops).map { step in
-            let progress = Double(step) * stepSize
+            // Round progress to 4 decimal places for consistency
+            let progress = ((Double(step) * stepSize) * 10000).rounded() / 10000
 
             // Instead of rounding, find the bounding indices and interpolate between them
             let fromFloatIndex = Double(fromStops.count - 1) * progress
             let fromLowerIndex = Int(floor(fromFloatIndex))
             let fromUpperIndex = Int(ceil(fromFloatIndex))
-            let fromFraction = fromFloatIndex - Double(fromLowerIndex)
+            // Round fraction to 4 decimal places for consistency
+            let fromFraction = ((fromFloatIndex - Double(fromLowerIndex)) * 10000).rounded() / 10000
 
-            let toLowerIndex = Int(floor(Double(toStops.count - 1) * progress))
-            let toUpperIndex = Int(ceil(Double(toStops.count - 1) * progress))
-            let toFraction = Double(toStops.count - 1) * progress - Double(toLowerIndex)
+            let toFloatIndex = Double(toStops.count - 1) * progress
+            let toLowerIndex = Int(floor(toFloatIndex))
+            let toUpperIndex = Int(ceil(toFloatIndex))
+            // Round fraction to 4 decimal places for consistency
+            let toFraction = ((toFloatIndex - Double(toLowerIndex)) * 10000).rounded() / 10000
 
             // Get the bounding colors from both ramps
             let fromLower = fromStops[fromLowerIndex].value
@@ -178,7 +189,12 @@ public class ColorRampGenerator {
     ///   - t: Interpolation factor (0-1)
     /// - Returns: Interpolated value
     private func lerp(_ a: Double, _ b: Double, _ t: Double) -> Double {
-        return a + (b - a) * t
+        // Normalize t to ensure consistent results
+        let normalizedT = (t * 1000).rounded() / 1000
+        let result = a + ((b - a) * normalizedT)
+        
+        // Round to 2 decimal places for consistency
+        return (result * 100).rounded() / 100
     }
 
     /// Interpolates between two hue angles, taking the shortest path around the color wheel
@@ -188,8 +204,16 @@ public class ColorRampGenerator {
     ///   - t: Interpolation factor (0-1)
     /// - Returns: Interpolated hue angle
     private func lerpHue(_ h1: Double, _ h2: Double, _ t: Double) -> Double {
-        let diff = (h2 - h1 + 360).truncatingRemainder(dividingBy: 360)
+        // Normalize inputs to ensure consistent results
+        let normalizedH1 = (h1.truncatingRemainder(dividingBy: 360) * 100).rounded() / 100
+        let normalizedH2 = (h2.truncatingRemainder(dividingBy: 360) * 100).rounded() / 100
+        let normalizedT = (t * 1000).rounded() / 1000
+        
+        let diff = (normalizedH2 - normalizedH1 + 360).truncatingRemainder(dividingBy: 360)
         let shortestPath = diff <= 180 ? diff : diff - 360
-        return (h1 + shortestPath * t + 360).truncatingRemainder(dividingBy: 360)
+        let result = (normalizedH1 + shortestPath * normalizedT + 360).truncatingRemainder(dividingBy: 360)
+        
+        // Round to 2 decimal places for consistency
+        return (result * 100).rounded() / 100
     }
 }

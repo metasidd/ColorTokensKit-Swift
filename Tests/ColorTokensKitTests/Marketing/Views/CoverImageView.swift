@@ -28,21 +28,31 @@ struct CoverImageView: View {
             let sortedRamp = hues.sorted { $0.colors.first?.h ?? 0 < $1.colors.first?.h ?? 0 }
             
             ForEach(Array(sortedRamp.enumerated()), id: \.offset) { index, element in
-                colorRow(for: element.colors)
+                colorRow(for: element.colors, rowIndex: index)
             }
         }
         .padding(0)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    private func colorRow(for colors: [LCHColor]) -> some View {
+    private func colorRow(for colors: [LCHColor], rowIndex: Int) -> some View {
         HStack(spacing: gridSpacing) {
-            let shuffledColors = slightlyShuffle(colors)
-            let halfCount = shuffledColors.count / 2
-            var shapes = Array(repeating: true, count: halfCount) + Array(repeating: false, count: shuffledColors.count - halfCount)
+            // Create a seed value based on both the first color's hue and the row index
+            // This ensures each row has a different pattern even if hues are similar
+            let hueComponent = Int(colors.first?.h ?? 0) % 360
+            let patternSeed = hueComponent + (rowIndex * 73) // Using a prime number multiplier for better distribution
             
-            // Shuffle shapes to randomly distribute circles and squares
-            shapes.shuffle()
+            let shuffledColors = deterministicShuffle(colors, seed: patternSeed)
+            
+            // Create an alternating pattern of shapes as the starting point
+            // This ensures we don't start with all circles in first half and all squares in second half
+            var shapes = [Bool]()
+            for i in 0..<shuffledColors.count {
+                // Start with alternating pattern but with some variation based on row
+                shapes.append((i + rowIndex) % 3 != 1) // Creates a pattern like [true, false, true, true, false, true, ...]
+            }
+            
+            shapes = deterministicShuffleShapes(shapes, seed: patternSeed)
             
             return HStack(spacing: gridSpacing) {
                 ForEach(shuffledColors.indices, id: \.self) { index in
@@ -62,15 +72,87 @@ struct CoverImageView: View {
             )
     }
 
-    private func slightlyShuffle(_ colors: [LCHColor]) -> [LCHColor] {
+    /// Deterministic version of slightlyShuffle that uses a fixed pattern
+    /// - Parameters:
+    ///   - colors: The array of colors to shuffle
+    ///   - seed: A seed value to create different but deterministic patterns
+    /// - Returns: A deterministically shuffled array of colors
+    private func deterministicShuffle(_ colors: [LCHColor], seed: Int) -> [LCHColor] {
         var shuffledColors = colors
+        
         for i in shuffledColors.indices {
-            let swapIndex = i + Int.random(in: -1...1) // Slight shuffle range
+            // Use the seed to create a different but deterministic pattern for each row
+            let patternValue = (i + seed) % 4
+            
+            // Different shift patterns based on the combination of index and seed
+            let shift: Int
+            switch patternValue {
+            case 0:
+                shift = 1  // Shift right by 1
+            case 1:
+                shift = -1 // Shift left by 1
+            case 2:
+                shift = 2  // Shift right by 2
+            case 3:
+                shift = -2 // Shift left by 2
+            default:
+                shift = 0  // No shift (shouldn't happen)
+            }
+            
+            let swapIndex = i + shift
             if swapIndex >= 0 && swapIndex < shuffledColors.count {
                 shuffledColors.swapAt(i, swapIndex)
             }
         }
+        
         return shuffledColors
+    }
+    
+    /// Deterministic shuffle for shapes array
+    /// - Parameters:
+    ///   - shapes: The array of shape flags (true = circle, false = square)
+    ///   - seed: A seed value to create different but deterministic patterns
+    /// - Returns: A deterministically shuffled array of shape flags
+    private func deterministicShuffleShapes(_ shapes: [Bool], seed: Int) -> [Bool] {
+        var result = shapes
+        
+        // First pass: Apply pattern transformations
+        for i in 0..<result.count {
+            // Use multiple pattern factors to create more variation
+            let patternOffset1 = seed % 7  // Prime number for better distribution
+            let patternOffset2 = (seed * 13) % 11  // Another prime factor
+            
+            // Create different patterns based on position and seed
+            if i % 2 == 0 {
+                // Even positions get one pattern
+                result[i] = ((i + patternOffset1) % 4 != 1)
+            } else {
+                // Odd positions get a different pattern
+                result[i] = ((i + patternOffset2) % 5 != 2)
+            }
+            
+            // Add more variation with additional pattern rules
+            if i > 0 && i < result.count - 1 {
+                // Avoid three squares in a row
+                if !result[i-1] && !result[i] && i+1 < result.count && !result[i+1] {
+                    result[i] = true
+                }
+                
+                // Avoid three circles in a row
+                if result[i-1] && result[i] && i+1 < result.count && result[i+1] {
+                    result[i] = false
+                }
+            }
+        }
+        
+        // Second pass: Ensure no more than two of the same shape appear consecutively
+        for i in 1..<result.count-1 {
+            if result[i-1] == result[i] && result[i] == result[i+1] {
+                result[i] = !result[i]
+            }
+        }
+        
+        return result
     }
 }
 
