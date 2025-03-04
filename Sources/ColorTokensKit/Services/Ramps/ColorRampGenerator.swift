@@ -39,15 +39,16 @@ public class ColorRampGenerator {
         // Assign a constant value
         let steps = steps ?? ColorConstants.rampStops
 
+        // Normalize the target hue consistently
+        let normalizedTargetHue = targetHue.normalizedHue
+
         // Handle grayscale and generate appropriate cache key
         let cacheKey = {
             if isGrayscale {
                 return "gray-\(steps)"
             } else {
-                // For color ramps, normalize hue to 0-359 range with consistent precision
-                // This ensures consistent interpolation around the color wheel
-                let normalizedHue = (targetHue.truncatingRemainder(dividingBy: 360) * 100).rounded() / 100
-                return "H\(normalizedHue)-\(steps)"
+                // For color ramps, use the normalized hue value
+                return "H\(normalizedTargetHue)-\(steps)"
             }
         }()
 
@@ -82,16 +83,16 @@ public class ColorRampGenerator {
         let lowerHue = lowerRamp.stops.first?.value.h ?? 0
         let upperHue = upperRamp.stops.first?.value.h ?? 0
 
+        // Normalize hues consistently
+        let normalizedLowerHue = lowerHue.normalizedHue
+        let normalizedUpperHue = upperHue.normalizedHue
+
         // Calculate interpolation factor with proper wrapping
-        let hueDiff = (upperHue - lowerHue + 360).truncatingRemainder(dividingBy: 360)
-        
-        // Normalize the target hue for consistent calculation
-        let normalizedTargetHue = (targetHue.truncatingRemainder(dividingBy: 360) * 100).rounded() / 100
-        let normalizedLowerHue = (lowerHue.truncatingRemainder(dividingBy: 360) * 100).rounded() / 100
+        let hueDiff = (normalizedUpperHue - normalizedLowerHue + 360).normalizedHue
         
         // Calculate t with consistent precision
-        let rawT = (normalizedTargetHue - normalizedLowerHue + 360).truncatingRemainder(dividingBy: 360) / hueDiff
-        let t = (rawT * 10000).rounded() / 10000
+        let rawT = (normalizedTargetHue - normalizedLowerHue + 360).normalizedHue / hueDiff
+        let t = rawT.rounded(to: ColorConstants.interpolationPrecision)
 
         // Interpolate between corresponding stops
         let result = interpolateStops(from: lowerRamp, to: upperRamp, t: t)
@@ -190,11 +191,11 @@ public class ColorRampGenerator {
     /// - Returns: Interpolated value
     private func lerp(_ a: Double, _ b: Double, _ t: Double) -> Double {
         // Normalize t to ensure consistent results
-        let normalizedT = (t * 1000).rounded() / 1000
+        let normalizedT = t.rounded(toPlaces: ColorConstants.interpolationPrecision)
         let result = a + ((b - a) * normalizedT)
         
-        // Round to 2 decimal places for consistency
-        return (result * 100).rounded() / 100
+        // Round to specified decimal places for consistency
+        return result.rounded(toPlaces: ColorConstants.valuePrecision)
     }
 
     /// Interpolates between two hue angles, taking the shortest path around the color wheel
@@ -205,15 +206,14 @@ public class ColorRampGenerator {
     /// - Returns: Interpolated hue angle
     private func lerpHue(_ h1: Double, _ h2: Double, _ t: Double) -> Double {
         // Normalize inputs to ensure consistent results
-        let normalizedH1 = (h1.truncatingRemainder(dividingBy: 360) * 100).rounded() / 100
-        let normalizedH2 = (h2.truncatingRemainder(dividingBy: 360) * 100).rounded() / 100
-        let normalizedT = (t * 1000).rounded() / 1000
+        let normalizedH1 = h1.normalizedHue
+        let normalizedH2 = h2.normalizedHue
+        let normalizedT = t.rounded(toPlaces: ColorConstants.interpolationPrecision)
         
-        let diff = (normalizedH2 - normalizedH1 + 360).truncatingRemainder(dividingBy: 360)
+        let diff = (normalizedH2 - normalizedH1 + 360).normalizedHue
         let shortestPath = diff <= 180 ? diff : diff - 360
-        let result = (normalizedH1 + shortestPath * normalizedT + 360).truncatingRemainder(dividingBy: 360)
+        let result = (normalizedH1 + shortestPath * normalizedT + 360).normalizedHue
         
-        // Round to 2 decimal places for consistency
-        return (result * 100).rounded() / 100
+        return result
     }
 }
