@@ -45,7 +45,7 @@ public class ColorRampGenerator {
         // Handle grayscale and generate appropriate cache key
         let cacheKey = {
             if isGrayscale {
-                return "gray-\(steps)"
+                return "Gray-\(steps)"
             } else {
                 // For color ramps, use the normalized hue value
                 return "H\(normalizedTargetHue)-\(steps)"
