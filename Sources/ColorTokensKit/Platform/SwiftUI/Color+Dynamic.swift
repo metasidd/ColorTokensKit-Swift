@@ -4,21 +4,26 @@
 //
 
 import SwiftUI
-#if canImport(UIKit)
+
+#if canImport(AppKit)
+import AppKit
+fileprivate typealias NSorUIColor = NSColor
+
+#elseif canImport(UIKit)
 import UIKit
+fileprivate typealias NSorUIColor = UIColor
+
 #endif
 
 public extension Color {
-
-#if canImport(UIKit)
     /// Initialize with light/dark mode colors for iOS
     init(
         light lightModeColor: @escaping @autoclosure () -> Color,
         dark darkModeColor: @escaping @autoclosure () -> Color
     ) {
-        self.init(UIColor(
-            light: UIColor(lightModeColor()),
-            dark: UIColor(darkModeColor())
+        self.init(NSorUIColor(
+            light: NSorUIColor(lightModeColor()),
+            dark: NSorUIColor(darkModeColor())
         ))
     }
 
@@ -27,11 +32,9 @@ public extension Color {
         light lightModeColor: @escaping @autoclosure () -> LCHColor,
         dark darkModeColor: @escaping @autoclosure () -> LCHColor
     ) {
-        self.init(UIColor(
-            light: UIColor(lightModeColor().toColor()),
-            dark: UIColor(darkModeColor().toColor())
+        self.init(NSorUIColor(
+            light: NSorUIColor(lightModeColor().toColor()),
+            dark: NSorUIColor(darkModeColor().toColor())
         ))
     }
-#endif
-        
 }
