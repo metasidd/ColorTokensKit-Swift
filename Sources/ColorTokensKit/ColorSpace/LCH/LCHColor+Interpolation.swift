@@ -10,12 +10,21 @@ import Foundation
 public extension LCHColor {
     /// Interpolates between two LCH colors
     func lerp(_ other: LCHColor, t: CGFloat) -> LCHColor {
-        let angle = (((((other.h - h).truncatingRemainder(dividingBy: 360)) + 540).truncatingRemainder(dividingBy: 360)) - 180) * t
+        // Normalize the angle calculation for consistent results
+        let normalizedH = h // Already normalized during initialization
+        let normalizedOtherH = other.h // Already normalized during initialization
+        let normalizedT = t.rounded(to: ColorConstants.interpolationPrecision)
+        
+        // Calculate the shortest path around the color wheel
+        let rawDiff = normalizedOtherH - normalizedH
+        let wrappedDiff = rawDiff.normalizedHue
+        let angle = (wrappedDiff <= 180 ? wrappedDiff : wrappedDiff - 360) * normalizedT
+        
         return LCHColor(
-            l: l + (other.l - l) * t,
-            c: c + (other.c - c) * t,
-            h: (h + angle + 360).truncatingRemainder(dividingBy: 360),
-            alpha: alpha + (other.alpha - alpha) * t
+            l: l + (other.l - l) * normalizedT,
+            c: c + (other.c - c) * normalizedT,
+            h: (normalizedH + angle + 360), // Will be normalized in the initializer
+            alpha: alpha + (other.alpha - alpha) * normalizedT
         )
     }
 }

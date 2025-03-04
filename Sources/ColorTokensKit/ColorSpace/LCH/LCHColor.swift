@@ -33,7 +33,7 @@ public struct LCHColor: Hashable, Equatable {
     ) {
         self.l = l
         self.c = c
-        self.h = h
+        self.h = h.normalizedHue
         self.alpha = alpha
     }
 
@@ -41,7 +41,7 @@ public struct LCHColor: Hashable, Equatable {
         let lchColor = RGBColor(color: color).toLCH()
         l = lchColor.l
         c = lchColor.c
-        h = lchColor.h
+        h = lchColor.h.normalizedHue
         alpha = lchColor.alpha
     }
 
@@ -58,7 +58,7 @@ public struct LCHColor: Hashable, Equatable {
 
             self.l = max(0, min(l, 100))
             self.c = max(0, min(c, 128))
-            self.h = (h.truncatingRemainder(dividingBy: 360) + 360).truncatingRemainder(dividingBy: 360)
+            self.h = h.normalizedHue
         } else {
             l = 70 // Default lightness
             c = 30 // Default chroma
