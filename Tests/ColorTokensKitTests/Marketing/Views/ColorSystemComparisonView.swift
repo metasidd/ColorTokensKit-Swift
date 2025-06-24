@@ -19,7 +19,7 @@ struct ColorSystemComparisonView: View {
                 name: "H\(Int(hue))",
                 color: LCHColor(l: 70, c: midPoint.c, h: midPoint.h)
             )
-        }
+        }.sorted { $0.color.h < $1.color.h }
     }
 
     var body: some View {

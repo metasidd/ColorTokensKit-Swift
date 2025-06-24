@@ -94,7 +94,8 @@ struct PillView: View {
         }
         .fontDesign(.monospaced)
         .padding(MarketingStyle.pagePadding)
-        .frame(maxWidth: .infinity, alignment: .center)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .background(Color.white)
     }
     
     private func makePill(text: String, color: Color) -> some View {
