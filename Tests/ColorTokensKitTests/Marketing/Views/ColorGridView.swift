@@ -40,6 +40,8 @@ struct ColorGridView: View {
         }
         .font(.system(size: 10))
         .fontDesign(.monospaced)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.white)
     }
 }
 
