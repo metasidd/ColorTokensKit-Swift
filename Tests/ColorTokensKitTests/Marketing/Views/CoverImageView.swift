@@ -6,8 +6,11 @@ struct CoverImageView: View {
     private let gridSpacing: Double = 0
     private let colorSize: Double = 80
     
-    var hues: [(name: String, colors: [LCHColor])] {
-        (0 ... hueSteps).map { step in
+    // Make hues computed once and cached to avoid repeated random operations
+    private let hues: [(name: String, colors: [LCHColor])]
+    
+    init() {
+        self.hues = (0 ... hueSteps).map { step in
             let hue = Double(step) * (360.0 / Double(hueSteps))
             let stops = ColorRampGenerator().getColorRamp(forHue: hue)
 
@@ -37,12 +40,9 @@ struct CoverImageView: View {
 
     private func colorRow(for colors: [LCHColor]) -> some View {
         HStack(spacing: gridSpacing) {
-            let shuffledColors = slightlyShuffle(colors)
+            let shuffledColors = deterministicShuffle(colors)
             let halfCount = shuffledColors.count / 2
-            var shapes = Array(repeating: true, count: halfCount) + Array(repeating: false, count: shuffledColors.count - halfCount)
-            
-            // Shuffle shapes to randomly distribute circles and squares
-            shapes.shuffle()
+            let shapes = deterministicShapes(count: shuffledColors.count, halfCount: halfCount)
             
             return HStack(spacing: gridSpacing) {
                 ForEach(shuffledColors.indices, id: \.self) { index in
@@ -62,15 +62,28 @@ struct CoverImageView: View {
             )
     }
 
-    private func slightlyShuffle(_ colors: [LCHColor]) -> [LCHColor] {
+    private func deterministicShuffle(_ colors: [LCHColor]) -> [LCHColor] {
         var shuffledColors = colors
+        // Use a deterministic seed based on the color values to ensure consistency
         for i in shuffledColors.indices {
-            let swapIndex = i + Int.random(in: -1...1) // Slight shuffle range
+            let seed = Int(shuffledColors[i].h + shuffledColors[i].l + shuffledColors[i].c) % 3
+            let swapIndex = i + (seed - 1) // Creates slight shuffle effect without randomness
             if swapIndex >= 0 && swapIndex < shuffledColors.count {
                 shuffledColors.swapAt(i, swapIndex)
             }
         }
         return shuffledColors
+    }
+    
+    private func deterministicShapes(count: Int, halfCount: Int) -> [Bool] {
+        var shapes = Array(repeating: true, count: halfCount) + Array(repeating: false, count: count - halfCount)
+        // Create a deterministic pattern instead of random shuffle
+        for i in shapes.indices {
+            if i % 3 == 0 && i + 1 < shapes.count {
+                shapes.swapAt(i, i + 1)
+            }
+        }
+        return shapes
     }
 }
 
