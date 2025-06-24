@@ -71,17 +71,18 @@ public class ColorRampGenerator {
         let sortedRamps = colorPaletteData.colorRamps
             .filter { $0.name != "gray" }
             .sorted { ramp1, ramp2 in
-                let hue1 = ramp1.stops.first?.value.h ?? 0
-                let hue2 = ramp2.stops.first?.value.h ?? 0
+                // Use the "0" stop (lightest) for consistent hue comparison
+                let hue1 = ramp1.stops["0"]?.h ?? 0
+                let hue2 = ramp2.stops["0"]?.h ?? 0
                 return hue1 < hue2
             }
 
         // Find bounding ramps
         let (lowerRamp, upperRamp) = findBoundingRamps(forHue: targetHue, in: sortedRamps)
 
-        // Get the first stop to determine hues
-        let lowerHue = lowerRamp.stops.first?.value.h ?? 0
-        let upperHue = upperRamp.stops.first?.value.h ?? 0
+        // Get the "0" stop (lightest) to determine hues consistently
+        let lowerHue = lowerRamp.stops["0"]?.h ?? 0
+        let upperHue = upperRamp.stops["0"]?.h ?? 0
 
         // Normalize hues consistently
         let normalizedLowerHue = lowerHue.normalizedHue
@@ -116,7 +117,8 @@ public class ColorRampGenerator {
 
         // Find the first ramp with hue greater than target
         let upperIndex = ramps.firstIndex { ramp in
-            let rampHue = ramp.stops.first?.value.h ?? 0
+            // Use the "0" stop (lightest) for consistent hue comparison
+            let rampHue = ramp.stops["0"]?.h ?? 0
             return rampHue >= hue
         } ?? 0
 
@@ -131,9 +133,9 @@ public class ColorRampGenerator {
     ///   - t: Interpolation factor (0-1)
     /// - Returns: Array of interpolated LCHColors
     private func interpolateStops(from: ColorRamp, to: ColorRamp, t: Double) -> [LCHColor] {
-        // Get sorted stops from both ramps
-        let fromStops = from.stops.sorted { Int($0.key) ?? 0 < Int($1.key) ?? 0 }
-        let toStops = to.stops.sorted { Int($0.key) ?? 0 < Int($1.key) ?? 0 }
+        // Get sorted stops from both ramps - sort by numeric value of keys
+        let fromStops = from.stops.sorted { (Int($0.key) ?? 0) < (Int($1.key) ?? 0) }
+        let toStops = to.stops.sorted { (Int($0.key) ?? 0) < (Int($1.key) ?? 0) }
 
         // Create evenly spaced indices for the requested number of steps
         let stepSize = 1.0 / Double(ColorConstants.rampStops - 1)

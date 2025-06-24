@@ -5,7 +5,8 @@ struct ColorPaletteData: Codable {
 
     // Keep public as it's the API surface
     var colorRamps: [ColorRamp] {
-        palettes.map { name, stops in
+        // Sort by name to ensure consistent ordering
+        palettes.sorted(by: { $0.key < $1.key }).map { name, stops in
             ColorRamp(
                 name: name,
                 stops: stops.mapValues { LCHColor(lchString: $0) }
