@@ -67,4 +67,10 @@ public struct LCHColor: Hashable, Equatable {
 
         alpha = 1.0
     }
+    
+    /// Initialize a LCHColor from a hex string. 
+    public init(hex: String) {
+        let color = Color(hex: hex)
+        self.init(color: color)
+    }
 }
