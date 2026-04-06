@@ -41,16 +41,38 @@ We've all been here:
 
 ```swift
 Text("The Everything Company")
-  .background(Color(hex: "#FA3499")) // Hard-coded hex — not accessible, no dark mode
-  .background(Color(red: 0.5, green: 0.5, blue: 1.0)) // Raw RGB — messy & unscalable
-  .background(Color.red.secondary) // Native colors — limited palette, no real control
-  .background(Color.brandColorBackground) // Manual tokens — hard to maintain, not responsive
-  .background(Color.brandColor.backgroundPrimary) // ColorTokensKit — accessible, dark mode, semantic
+  .background(Color(hex: "#FA3499"))                    // Please don't do this
+  .background(Color(red: 0.5, green: 0.5, blue: 1.0))  // Messy & unscalable
+  .background(Color.red.secondary)                      // No control, limited to a few colors
+  .background(Color.brandColorBackground)               // Needs many variables, hard to maintain
+  .background(Color.brandColor.backgroundPrimary)       // Semantic, accessible, dark mode, ergonomic
 ```
 
 ## But wait, what are design tokens?
 
 Design tokens are the smallest, atomic decisions in your UI — the building blocks everything else is made of. Think of them as your single source of truth for colors, so you never have to argue about hex values in a PR again.
+
+```
+                         Your Brand Hue (e.g. Blue)
+                                  |
+                                  v
+                    +--------------------------+
+                    |   Color Ramp Generator   |
+                    |  20 stops, light → dark  |
+                    +--------------------------+
+                                  |
+                  +---------------+---------------+
+                  |               |               |
+                  v               v               v
+             _50 (light)    _500 (mid)     _1000 (dark)
+                  |               |               |
+                  v               v               v
+          +-------------+ +-------------+ +-------------+
+          | background  | | foreground  | | outline     |
+          | Primary     | | Secondary   | | Tertiary    |
+          | (light/dark)| | (light/dark)| | (light/dark)|
+          +-------------+ +-------------+ +-------------+
+```
 
 In ColorTokensKit, each token maps a semantic role (like "primary background" or "secondary text") to the right shade for both light and dark mode. Change one hue, and your entire app updates.
 
@@ -89,7 +111,7 @@ https://github.com/metasidd/ColorTokensKit-Swift.git
 ### Setup (3 steps, seriously)
 
 1. `import ColorTokensKit` in your files
-2. Copy [ColorTokens.swift](https://github.com/metasidd/ColorTokensKit-Swift/blob/main/Tests/ColorTokensKitTests/Marketing/Setup/ColorTokens.swift) into your project, or define your own semantic tokens
+2. Copy [ColorTokens.swift](Tests/ColorTokensKitTests/Marketing/Setup/ColorTokens.swift) into your project, or define your own semantic tokens (it uses `ProColor` under the hood — backed by OKLCH)
 3. Start using `Color.proBlue.backgroundPrimary`, `Color.foregroundPrimary`, etc.
 
 That's it. You're ready to give your app a fresh coat of paint.
