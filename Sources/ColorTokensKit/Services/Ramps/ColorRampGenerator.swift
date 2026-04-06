@@ -17,8 +17,11 @@
 import Foundation
 
 public class ColorRampGenerator {
-    // Make this static to share cache across instances
+    /// Shared instance to avoid redundant allocations
+    static let shared = ColorRampGenerator()
+
     private static var interpolatedRamps: [String: [LCHColor]] = [:]
+    private static let cacheLock = NSLock()
     private let colorPaletteData: ColorPaletteData
 
     /// Initializes the color ramp generator with required palette data
@@ -53,16 +56,21 @@ public class ColorRampGenerator {
         }()
 
         // Check static cache first
+        ColorRampGenerator.cacheLock.lock()
         if let cached = ColorRampGenerator.interpolatedRamps[cacheKey] {
+            ColorRampGenerator.cacheLock.unlock()
             return cached
         }
+        ColorRampGenerator.cacheLock.unlock()
 
         // If grayscale is requested, use the gray ramp from palette data
         if isGrayscale {
             let grayRamp = colorPaletteData.colorRamps.first { $0.name == "gray" }
             if let grayRamp = grayRamp {
                 let result = interpolateStops(from: grayRamp, to: grayRamp, t: 0)
+                ColorRampGenerator.cacheLock.lock()
                 ColorRampGenerator.interpolatedRamps[cacheKey] = result
+                ColorRampGenerator.cacheLock.unlock()
                 return result
             }
         }
@@ -90,7 +98,7 @@ public class ColorRampGenerator {
 
         // Calculate interpolation factor with proper wrapping
         let hueDiff = (normalizedUpperHue - normalizedLowerHue + 360).normalizedHue
-        
+
         // Calculate t with consistent precision
         let rawT = (normalizedTargetHue - normalizedLowerHue + 360).normalizedHue / hueDiff
         let t = rawT.rounded(to: ColorConstants.interpolationPrecision)
@@ -99,7 +107,9 @@ public class ColorRampGenerator {
         let result = interpolateStops(from: lowerRamp, to: upperRamp, t: t)
 
         // Cache in static dictionary
+        ColorRampGenerator.cacheLock.lock()
         ColorRampGenerator.interpolatedRamps[cacheKey] = result
+        ColorRampGenerator.cacheLock.unlock()
 
         return result
     }

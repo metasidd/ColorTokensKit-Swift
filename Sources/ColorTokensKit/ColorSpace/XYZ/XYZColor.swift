@@ -6,7 +6,7 @@
 
 import Foundation
 
-public struct XYZColor: Hashable {
+public struct XYZColor: Hashable, Sendable {
     public let x: CGFloat // 0..0.95047
     public let y: CGFloat // 0..1
     public let z: CGFloat // 0..1.08883
