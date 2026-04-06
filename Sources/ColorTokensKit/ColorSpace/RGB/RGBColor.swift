@@ -21,7 +21,7 @@ public struct RGBColor: Hashable {
     }
 
     public init(color: Color) {
-        if #available(iOS 17.0, *) {
+        if #available(iOS 17.0, macOS 14.0, tvOS 17.0, watchOS 10.0, *) {
             let resolvedColor = color.resolve(in: .init())
             self.r = CGFloat(resolvedColor.red)
             self.g = CGFloat(resolvedColor.green)
