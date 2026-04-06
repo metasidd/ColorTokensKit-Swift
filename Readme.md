@@ -1,4 +1,4 @@
-# 🌈 ColorTokensKit - Alpha
+# 🌈 ColorTokensKit
 
 [![License: MIT](https://cdn.prod.website-files.com/5e0f1144930a8bc8aace526c/65dd9eb5aaca434fac4f1c34_License-MIT-blue.svg)](/LICENSE)
 
@@ -10,13 +10,14 @@ By designers, for developers.
 
 ColorTokensKit is a powerful design library that extends Swift's native capabilities by offering ergonomic access to the LCH color system, and thousands of accessible colors. 
 
-- 📱 Designed for Apple apps
+- 📱 Designed for Apple apps (iOS 16+, macOS 13+, tvOS 16+, watchOS 9+, visionOS 1+)
 - ⭐️ Easy to use color token APIs
 - 🎨 Pre-defined LCH color palettes
-- 🤝 Built-in support for accessible contrast ratios
+- 🤝 Built-in accessibility: WCAG 2.x and APCA contrast ratios
 - 🌘 Built-in dark mode capability
 - 🌈 Built-in theming for all apps
 - 🎛️ Easy conversions between RGB/HSL/LCH/LAB/XYZ spaces
+- 🔒 Thread-safe and Sendable — ready for async/await
 - 🕊️ No dependencies
 
 > 💚 The broader concept of LCH-based design tokens is widely trusted, and utilized by leading companies like [Linear](https://linear.app/blog/how-we-redesigned-the-linear-ui), [Slack](https://slack.design/articles/a-new-visual-language-for-slack/), [Stripe](https://stripe.com/blog/accessible-color-systems), [Zapier](https://zapier.com/blog/lch-easier-accessibility-prettier-colors/) and many others.
@@ -54,7 +55,7 @@ Instead of hardcoding each of the color values in multiple places, you define a 
 ```swift
 extension Color {
     var brandColor: LCHColor {
-        LCHColor("#FF04DA") // The hex would represent your brand color
+        LCHColor(hex: "#FF04DA") // The hex would represent your brand color
     }
 }
 ```
@@ -131,7 +132,7 @@ struct ContentView: View {
     CardView(theme: Color.proBlue) // Blue theme
     CardView(theme: Color.proGold) // Gold theme
     CardView(theme: Color.proRuby) // Ruby theme
-    CardView(theme: LCHColor("#abcdef")) // Custom theme based on hex values
+    CardView(theme: LCHColor(hex: "#abcdef")) // Custom theme based on hex values
   }
 }
 
@@ -168,7 +169,28 @@ struct CardView: View {
 
 # 🛠️ Utilities
 
-In addition to just using color tokens, we offer some easy conversions, and interpolations colors for niche usecases.
+In addition to just using color tokens, we offer some easy conversions, interpolations, and accessibility tools.
+
+## Contrast Ratios
+
+Check if your color combinations are accessible using WCAG 2.x or APCA contrast.
+
+```swift
+let background = LCHColor(l: 95, c: 5, h: 210)
+let text = LCHColor(l: 20, c: 10, h: 210)
+
+// WCAG 2.x contrast ratio (1–21, higher is better)
+let wcagRatio = background.contrastRatio(to: text) // Uses .wcag2 by default
+print(wcagRatio) // e.g. 12.5 — passes AAA
+
+// APCA perceptual contrast (signed Lc value)
+// Positive = dark text on light bg, negative = light text on dark bg
+let apcaLc = background.contrastRatio(to: text, method: .apca)
+print(apcaLc) // e.g. 85.3 — passes for body text
+
+// Also works on SwiftUI Colors
+let ratio = Color.white.contrastRatio(to: Color.black) // 21.0
+```
 
 ## Interpolating
 Transitioning colors using LCH offer much smoother color values.
@@ -181,48 +203,43 @@ print(interpolatedColor) // Output: LCHColor(l: 50, c: 45, h: 75)
 ```
 
 ## Conversions
-ColorKit allows you to convert between different color types - RGB, HSL, HEX, LCH, LAB etc. Here are some simple examples:
+ColorTokensKit allows you to convert between different color types — RGB, HSL, HEX, LCH, LAB, XYZ. Here are some simple examples:
 
 ```swift
-
 // HEX to Color
 let color = Color(hex: "#abcdef")
-
-// RGB to LCH Color
-let rgbColor = Color(r: 0.5, g: 0.4, b: 0.3, alpha: 1.0)
-let lchColor = LCHColor(color: rgbColor)
 
 // HEX to LCH Color
 let lchColor = LCHColor(hex: "#abcdef")
 
-// HSL to LCH Color
-let hslColor = Color(h: 50, s: 50, l: 50)
-let lchColor = LCHColor(color: hslColor)
+// HSL to Color
+let hslColor = Color(h: 50, s: 0.5, l: 0.5)
+
+// LCH to SwiftUI Color
+let lchColor = LCHColor(l: 40, c: 30, h: 60)
+let swiftUIColor = lchColor.toColor()
 
 // LCH to RGB
-let lchColor = LCHColor(l: 40, c: 30, h: 60)
-let rgbColor: color = lchColor.toRGB()
+let rgbColor = lchColor.toRGB()
 
-// LCH to HEX
-let lchColor = LCHColor(l: 40, c: 30, h: 60)
-let hexColor: String = lchColor.toHex()
+// Color to LCH
+let lch = Color.blue.toLCH()
 
-// LCH to UIColor
-let lchColor = LCHColor(l: 42.33, c: 29.65, h: 59.53, alpha: 1.0)
-let uiColor = lchColor.toColor()
-print(uiColor) // Output: UIDeviceRGBColorSpace 0.5 0.4 0.3 1
-
+// Color to HEX string
+let hex = Color.blue.getHexString() // e.g. "0000FF"
 ```
 
 # Future Ideas
-- [ ] Offer `.lighten()`, `.darken()`, `.saturate()` and `.desaturate()` for LCH Colors
-- [ ] Create smooth gradients using LCH colors
-- [ ] Add resource links to Read Me
-- [ ] Basic Unit Tests
-- [ ] UI Snapshot Tests
-- [ ] Example Figma
-- [ ] Custom Lightness, Chroma or Hue curves
-- [ ] Any other feedback?
+- [ ] OKLCH color space support (fixes CIELab hue linearity issues)
+- [ ] Delta E color difference API (CIE76 / CIEDE2000)
+- [ ] Non-linear lightness curves for ramp generation
+- [ ] Semantic token layer (primitive → semantic → component)
+- [ ] `.lighten()`, `.darken()`, `.saturate()` and `.desaturate()` for LCH Colors
+- [ ] Smooth gradients using LCH colors
+- [ ] Color blindness simulation
+- [ ] HSL/HSV color space types
+- [ ] Display P3 gamut awareness
+- [ ] Example Figma file
 
 # License
 The source code for the site is licensed under the MIT license, which you can find in the MIT-LICENSE.txt file.
