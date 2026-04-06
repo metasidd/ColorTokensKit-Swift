@@ -193,11 +193,11 @@ public class ColorRampGenerator {
     /// - Returns: Interpolated value
     private func lerp(_ a: Double, _ b: Double, _ t: Double) -> Double {
         // Normalize t to ensure consistent results
-        let normalizedT = t.rounded(toPlaces: ColorConstants.interpolationPrecision)
+        let normalizedT = t.rounded(to: ColorConstants.interpolationPrecision)
         let result = a + ((b - a) * normalizedT)
         
         // Round to specified decimal places for consistency
-        return result.rounded(toPlaces: ColorConstants.valuePrecision)
+        return result.rounded(to: ColorConstants.valuePrecision)
     }
 
     /// Interpolates between two hue angles, taking the shortest path around the color wheel
@@ -210,7 +210,7 @@ public class ColorRampGenerator {
         // Normalize inputs to ensure consistent results
         let normalizedH1 = h1.normalizedHue
         let normalizedH2 = h2.normalizedHue
-        let normalizedT = t.rounded(toPlaces: ColorConstants.interpolationPrecision)
+        let normalizedT = t.rounded(to: ColorConstants.interpolationPrecision)
         
         let diff = (normalizedH2 - normalizedH1 + 360).normalizedHue
         let shortestPath = diff <= 180 ? diff : diff - 360
