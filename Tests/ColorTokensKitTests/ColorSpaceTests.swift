@@ -157,6 +157,29 @@ final class ColorSpaceConversionTests: XCTestCase {
         XCTAssertTrue(color.c > 100, "Red hex should have high chroma")
     }
 
+    // MARK: - Gamut Clamping
+
+    func testOutOfGamutLCHClampsRGBToValidRange() {
+        // Highly saturated LCH color that would produce out-of-gamut RGB
+        let outOfGamut = LCHColor(l: 50, c: 128, h: 270) // extreme blue-purple
+        let rgb = outOfGamut.toRGB()
+        XCTAssertGreaterThanOrEqual(rgb.r, 0, "R should be clamped >= 0, got \(rgb.r)")
+        XCTAssertLessThanOrEqual(rgb.r, 1, "R should be clamped <= 1, got \(rgb.r)")
+        XCTAssertGreaterThanOrEqual(rgb.g, 0, "G should be clamped >= 0, got \(rgb.g)")
+        XCTAssertLessThanOrEqual(rgb.g, 1, "G should be clamped <= 1, got \(rgb.g)")
+        XCTAssertGreaterThanOrEqual(rgb.b, 0, "B should be clamped >= 0, got \(rgb.b)")
+        XCTAssertLessThanOrEqual(rgb.b, 1, "B should be clamped <= 1, got \(rgb.b)")
+    }
+
+    func testInGamutColorUnaffectedByClamping() {
+        // A well-behaved mid-range color should round-trip without being clipped
+        let original = RGBColor(r: 0.5, g: 0.3, b: 0.7, alpha: 1)
+        let roundTrip = original.toLCH().toRGB()
+        XCTAssertEqual(roundTrip.r, original.r, accuracy: tolerance)
+        XCTAssertEqual(roundTrip.g, original.g, accuracy: tolerance)
+        XCTAssertEqual(roundTrip.b, original.b, accuracy: tolerance)
+    }
+
     func testLCHEquality() {
         let a = LCHColor(l: 50, c: 30, h: 180)
         let b = LCHColor(l: 50, c: 30, h: 180)
