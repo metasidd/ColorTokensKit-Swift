@@ -2,24 +2,26 @@
 
 [![License: MIT](https://cdn.prod.website-files.com/5e0f1144930a8bc8aace526c/65dd9eb5aaca434fac4f1c34_License-MIT-blue.svg)](/LICENSE)
 
-**Perceptually uniform color tokens for Swift and SwiftUI.** Generate accessible, themeable color ramps from any hue using OKLCH and CIELab LCH color spaces. Built for iOS, macOS, tvOS, watchOS, and visionOS.
+By designers, for developers.
+
+**Perceptually uniform color tokens for Swift and SwiftUI.** Generate accessible, themeable color ramps from any hue using OKLCH and CIELab LCH. Works on iOS, macOS, tvOS, watchOS, and visionOS.
 
 ![Cover Image](/Assets/cover-image.png)
 
-## Why ColorTokensKit?
+## Why does this exist?
 
-Swift's built-in colors are limited to RGB and HSL — neither is perceptually uniform. That means two colors with the "same" lightness value can look completely different to the human eye. Design systems built on RGB break when you need consistent brightness across hues, accessible contrast, dark mode, or theming.
+Swift's native color system gives you RGB and HSL. That's fine for picking a single color, but the moment you need a *system* of colors — consistent brightness across hues, accessible contrast, dark mode, theming — it falls apart. Two colors with the same "lightness" in RGB can look wildly different to the human eye.
 
-ColorTokensKit solves this with perceptually uniform color spaces (OKLCH and CIELab LCH), giving you:
+ColorTokensKit fixes this by building on perceptually uniform color spaces (OKLCH and CIELab LCH). You pick a hue, and we generate an entire palette that just *works*.
 
 - **Thousands of colors from a single hue** — 20-stop ramps generated automatically
-- **Perceptual uniformity** — equal lightness values look equally bright across all hues
+- **Perceptual uniformity** — equal lightness values actually look equally bright
 - **Built-in accessibility** — WCAG 2.x and APCA contrast ratio utilities
 - **Automatic dark mode** — every token resolves to light and dark variants
 - **Theming in one line** — pass any `ProColor` and get a complete, accessible palette
 - **OKLCH + CIELab LCH** — two perceptually uniform color spaces, plus RGB, XYZ, LAB, OKLab conversions
 - **Thread-safe and Sendable** — ready for Swift concurrency
-- **Zero dependencies** — pure Swift, Swift Package Manager only
+- **Zero dependencies** — pure Swift, SPM only
 
 ### Platform Support
 
@@ -35,14 +37,22 @@ ColorTokensKit solves this with perceptually uniform color spaces (OKLCH and CIE
 
 ## The Problem
 
+We've all been here:
+
 ```swift
 Text("The Everything Company")
   .background(Color(hex: "#FA3499")) // Hard-coded hex — not accessible, no dark mode
-  .background(Color(red: 0.5, green: 0.5, blue: 1.0)) // Raw RGB — not perceptually uniform
-  .background(Color.red.secondary) // Native colors — limited palette, no control
+  .background(Color(red: 0.5, green: 0.5, blue: 1.0)) // Raw RGB — messy & unscalable
+  .background(Color.red.secondary) // Native colors — limited palette, no real control
   .background(Color.brandColorBackground) // Manual tokens — hard to maintain, not responsive
   .background(Color.brandColor.backgroundPrimary) // ColorTokensKit — accessible, dark mode, semantic
 ```
+
+## But wait, what are design tokens?
+
+Design tokens are the smallest, atomic decisions in your UI — the building blocks everything else is made of. Think of them as your single source of truth for colors, so you never have to argue about hex values in a PR again.
+
+In ColorTokensKit, each token maps a semantic role (like "primary background" or "secondary text") to the right shade for both light and dark mode. Change one hue, and your entire app updates.
 
 ## How It Works
 
@@ -50,13 +60,13 @@ ColorTokensKit generates 20-stop color ramps for any hue using hand-tuned palett
 
 The `ProColor` type wraps these ramps with semantic accessors — `.foregroundPrimary`, `.backgroundSecondary`, `.outlineTertiary` — that automatically resolve to the right stop for light and dark mode.
 
-### Color Spaces
+### What's OKLCH?
 
 ![Color System Comparison](/Assets/color-system-comparison.png)
 
-**OKLCH** (default) — Bjorn Ottosson's perceptually uniform color space. Fixes CIELab's hue linearity issues: blues stay blue when you adjust chroma, instead of shifting toward purple. Used by CSS Color Level 4, Tailwind v4, and modern design tools.
+**OKLCH** is Bjorn Ottosson's perceptually uniform color space, and it's what we use under the hood. It fixes CIELab's hue linearity issues — blues stay blue when you adjust chroma, instead of drifting toward purple. It's also what CSS Color Level 4, Tailwind v4, and most modern design tools have adopted.
 
-**CIELab LCH** — The classic perceptually uniform space. Still available for all conversions and ramp generation.
+**CIELab LCH** is the classic perceptually uniform space. Still fully available for conversions and ramp generation if you prefer it.
 
 ### LCH Color Grid
 
@@ -76,11 +86,13 @@ Add ColorTokensKit via Swift Package Manager:
 https://github.com/metasidd/ColorTokensKit-Swift.git
 ```
 
-### Setup
+### Setup (3 steps, seriously)
 
 1. `import ColorTokensKit` in your files
 2. Copy [ColorTokens.swift](https://github.com/metasidd/ColorTokensKit-Swift/blob/main/Tests/ColorTokensKitTests/Marketing/Setup/ColorTokens.swift) into your project, or define your own semantic tokens
 3. Start using `Color.proBlue.backgroundPrimary`, `Color.foregroundPrimary`, etc.
+
+That's it. You're ready to give your app a fresh coat of paint.
 
 ### Define a Brand Color
 
@@ -109,9 +121,11 @@ VStack {
 )
 ```
 
+And voila — dark mode works out of the box. No extra code.
+
 ## 23 Built-in Pro Colors
 
-Every pro color is a `ProColor` with full ramp access and semantic tokens:
+We ship 23 hand-tuned hues so you can get started without choosing anything:
 
 ```swift
 Color.proGray    Color.proPink    Color.proRed      Color.proTomato
@@ -122,11 +136,11 @@ Color.proSky     Color.proCobalt  Color.proIndigo   Color.proIris
 Color.proPurple  Color.proViolet  Color.proPlum     Color.proRuby
 ```
 
-Each has 20 stops (`_50` through `_1000`) and semantic tokens for foreground, background, surface, outline, and their inverted variants.
+Each one is a `ProColor` with 20 stops (`_50` through `_1000`) and the full set of semantic tokens for foreground, background, surface, outline, and their inverted variants.
 
 ## Theming
 
-Pass any `ProColor` as a theme and get a complete, accessible color system for that component:
+This is where it gets fun. Pass any `ProColor` as a theme, and your entire component gets a coherent, accessible color system — for free:
 
 ![Simple Card View](/Assets/simple-card-view.png)
 ![Simple Card Dark Mode View](/Assets/simple-card-dark-mode-view.png)
@@ -150,7 +164,7 @@ struct CardView: View {
     }
 }
 
-// Usage
+// Usage — swap the theme, everything updates
 CardView(theme: Color.proBlue)
 CardView(theme: Color.proGold)
 CardView(theme: .primary(forHue: 173)) // Any custom hue
@@ -176,7 +190,7 @@ Every `ProColor` provides these semantic tokens, each resolving to light/dark mo
 
 ### Contrast Ratios
 
-Check color accessibility with WCAG 2.x or APCA contrast:
+Making sure your colors are accessible shouldn't require a separate tool. Check WCAG 2.x or APCA contrast right in your code:
 
 ```swift
 let bg = RGBColor(r: 1, g: 1, b: 1, alpha: 1)
@@ -194,7 +208,7 @@ let ratio = Color.white.contrastRatio(to: Color.black) // 21.0
 
 ## Color Space Conversions
 
-Convert between RGB, LCH, OKLCH, OKLab, LAB, XYZ, HEX, and HSL:
+Need to drop down to raw color values? Convert freely between RGB, LCH, OKLCH, OKLab, LAB, XYZ, HEX, and HSL:
 
 ```swift
 // HEX
@@ -223,7 +237,7 @@ blue.toRGB()    // RGBColor
 
 ## Interpolation
 
-Interpolate between colors in perceptually uniform space for smooth gradients:
+Smooth color transitions that don't go muddy in the middle? That's what perceptually uniform interpolation gives you:
 
 ```swift
 // OKLCH interpolation (recommended)
@@ -239,19 +253,23 @@ let midLCH = c.lerp(d, t: 0.5)
 
 ## Architecture
 
+For the curious, here's how the types connect:
+
 ```
 ProColor (stable public API, backed by OKLCH)
-  └── OKLCHColor ←→ OKLabColor ←→ RGBColor ←→ Color
-  └── LCHColor  ←→ LABColor   ←→ XYZColor ←→ RGBColor
+  |-- OKLCHColor <-> OKLabColor <-> RGBColor <-> Color
+  |-- LCHColor   <-> LABColor   <-> XYZColor <-> RGBColor
 ```
 
-- **ProColor** — the recommended type for design tokens. Wraps OKLCH internally.
+- **ProColor** — the recommended type for design tokens. Wraps OKLCH internally, so we can evolve the internals without breaking your code.
 - **OKLCHColor / OKLabColor** — OKLCH polar and OKLab cartesian forms (Ottosson's reference).
 - **LCHColor / LABColor / XYZColor** — CIELab color spaces.
 - **RGBColor** — sRGB, bridges to/from SwiftUI `Color`.
 - **ColorRampGenerator** — generates 20-stop ramps from hand-tuned palette data.
 
 ## Future Ideas
+
+Got a feature request? [Open an issue](https://github.com/metasidd/ColorTokensKit-Swift/issues) — we'd love to hear from you.
 
 - [ ] Delta E color difference API (CIE76 / CIEDE2000)
 - [ ] Non-linear lightness curves for ramp generation
