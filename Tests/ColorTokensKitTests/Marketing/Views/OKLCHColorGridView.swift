@@ -48,13 +48,16 @@ private struct OKLCHColorColumn: View {
                 .frame(minWidth: 60, maxHeight: .infinity)
 
                 ForEach(Array(color.allStops.enumerated()), id: \.offset) { _, stop in
-                    let oklch = stop.toRGB().toOKLCH()
+                    let stopRGB = stop.toRGB()
+                    let oklch = stopRGB.toOKLCH()
+                    let whiteContrast = stopRGB.contrastRatio(to: RGBColor(r: 1, g: 1, b: 1, alpha: 1))
+                    let blackContrast = stopRGB.contrastRatio(to: RGBColor(r: 0, g: 0, b: 0, alpha: 1))
                     VStack(spacing: 2) {
                         Text("L:\(String(format: "%.2f", oklch.l))")
                         Text("C:\(String(format: "%.2f", oklch.c))")
                         Text("H:\(Int(oklch.h))")
                     }
-                    .foregroundStyle(oklch.l >= 0.5 ? Color.black : Color.white)
+                    .foregroundStyle(blackContrast >= whiteContrast ? Color.black : Color.white)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(stop.toColor())
                 }

@@ -22,10 +22,19 @@ struct ColorSystemComparisonView: View {
         }.sorted { $0.color.h < $1.color.h }
     }
 
+    // Generate OKLCH colors at the same hues for comparison
+    var oklchHues: [Color] {
+        (0 ... hueSteps).map { step in
+            let hue = Double(step) * (360.0 / Double(hueSteps))
+            return OKLCHColor(l: 0.7, c: 0.15, h: CGFloat(hue)).toColor()
+        }
+    }
+
     var body: some View {
         VStack(spacing: 48) {
             HStack(spacing: 64) {
                 lchGradientView
+                oklchGradientView
                 rgbGradientView
             }
             .font(.system(.title, design: .monospaced))
@@ -54,6 +63,23 @@ struct ColorSystemComparisonView: View {
         }
     }
 
+    private var oklchGradientView: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            Text("OKLCH Color System")
+
+            Rectangle()
+                .fill(
+                    LinearGradient(
+                        colors: oklchHues,
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .frame(maxWidth: .infinity, maxHeight: 240)
+                .clipShape(RoundedRectangle(cornerRadius: 32))
+        }
+    }
+
     private var rgbGradientView: some View {
         VStack(alignment: .leading, spacing: 24) {
             Text("RGB Color System")
@@ -72,7 +98,7 @@ struct ColorSystemComparisonView: View {
     }
 
     private var descriptionText: some View {
-        Text("LCH maintains consistent brightness and saturation across hues\nRGB shows uneven brightness and saturation changes.\nNote that while the RGB gradient is more vibrant, it is not as accessible or scalable as the LCH gradient system.")
+        Text("LCH and OKLCH maintain consistent brightness and saturation across hues.\nOKLCH improves hue linearity — blues stay blue instead of shifting purple.\nRGB shows uneven brightness and saturation changes.")
             .font(.system(.title2, design: .monospaced))
             .frame(maxWidth: .infinity, alignment: .leading)
             .multilineTextAlignment(.leading)
