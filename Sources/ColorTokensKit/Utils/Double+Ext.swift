@@ -12,13 +12,13 @@ public extension Double {
         // First ensure the value is in the 0-360 range
         let normalized = (self.truncatingRemainder(dividingBy: 360) + 360).truncatingRemainder(dividingBy: 360)
         // Then round to specified decimal places for consistency
-        return normalized.rounded(toPlaces: ColorConstants.huePrecision)
+        return normalized.rounded(to: ColorConstants.huePrecision)
     }
-    
+
     /// Rounds a value to a specific number of decimal places
     /// - Parameter places: Number of decimal places to round to
     /// - Returns: Rounded value
-    func rounded(toPlaces places: Int) -> Double {
+    func rounded(to places: Int) -> Double {
         let multiplier = pow(10.0, Double(places))
         return (self * multiplier).rounded() / multiplier
     }
