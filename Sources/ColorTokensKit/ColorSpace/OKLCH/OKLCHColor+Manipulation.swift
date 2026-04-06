@@ -16,8 +16,8 @@ public extension OKLCHColor {
     ) -> Color {
         return OKLCHColor(
             l: l ?? self.l,
-            c: c ?? 0,
-            h: h ?? 0,
+            c: c ?? self.c,
+            h: h ?? self.h,
             alpha: alpha ?? self.alpha
         ).toColor()
     }

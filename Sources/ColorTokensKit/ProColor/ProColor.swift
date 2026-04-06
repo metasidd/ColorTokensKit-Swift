@@ -12,7 +12,7 @@ import SwiftUI
 
 public struct ProColor: Hashable, Sendable {
     /// The underlying OKLCH representation
-    public let oklch: OKLCHColor
+    let oklch: OKLCHColor
 
     public init(oklch: OKLCHColor) {
         self.oklch = oklch

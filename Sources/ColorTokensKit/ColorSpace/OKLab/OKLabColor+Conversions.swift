@@ -28,9 +28,9 @@ public extension OKLabColor {
         let bLin = -0.0041960863 * lc - 0.7034186147 * mc + 1.7076147010 * sc
 
         // Linear sRGB → sRGB (gamma companding + clamp)
-        let r = min(max(OKLabColor.gammaCompand(rLin), 0), 1)
-        let g = min(max(OKLabColor.gammaCompand(gLin), 0), 1)
-        let b = min(max(OKLabColor.gammaCompand(bLin), 0), 1)
+        let r = min(max(linearToSRGB(rLin), 0), 1)
+        let g = min(max(linearToSRGB(gLin), 0), 1)
+        let b = min(max(linearToSRGB(bLin), 0), 1)
 
         return RGBColor(r: r, g: g, b: b, alpha: alpha)
     }
@@ -59,12 +59,4 @@ public extension OKLabColor {
         return toRGB().toLCH()
     }
 
-    // MARK: - sRGB Gamma Companding
-
-    /// Apply sRGB gamma curve (linear → sRGB)
-    private static func gammaCompand(_ v: CGFloat) -> CGFloat {
-        let absV = abs(v)
-        let out = absV > 0.0031308 ? 1.055 * pow(absV, 1.0 / 2.4) - 0.055 : absV * 12.92
-        return v > 0 ? out : -out
-    }
 }
