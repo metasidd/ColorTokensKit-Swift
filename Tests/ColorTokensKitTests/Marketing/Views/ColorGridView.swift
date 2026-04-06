@@ -61,12 +61,15 @@ private struct ColorColumn: View {
                 
                 // Color stops with chroma and lightness values
                 ForEach(Array(color.allStops.enumerated()), id: \.offset) { index, stop in
+                    let stopRGB = stop.toRGB()
+                    let whiteContrast = stopRGB.contrastRatio(to: RGBColor(r: 1, g: 1, b: 1, alpha: 1))
+                    let blackContrast = stopRGB.contrastRatio(to: RGBColor(r: 0, g: 0, b: 0, alpha: 1))
                     VStack(spacing: 2) {
                         Text("L:\(Int(stop.l))")
                         Text("C:\(Int(stop.c))")
                         Text("H:\(Int(stop.h))")
                     }
-                    .foregroundStyle(Int(stop.l) >= 50 ? Color.black : Color.white)
+                    .foregroundStyle(blackContrast >= whiteContrast ? Color.black : Color.white)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(stop.toColor())
                 }

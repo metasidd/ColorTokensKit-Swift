@@ -2,7 +2,7 @@
 // Color+ProColors.swift
 // ColorTokensKit
 //
-// Defines the professional color set using the LCH color space.
+// Defines the professional color set backed by OKLCH.
 // These colors serve as the foundation for the design system,
 // offering a comprehensive palette of harmonious colors.
 //
@@ -17,33 +17,33 @@ import SwiftUI
 
 public extension Color {
     // Pro color getters
-    static var proGray: LCHColor { LCHColor.getPrimaryColor(forHue: 0, isGrayscale: true) }
-    static var proPink: LCHColor { LCHColor.getPrimaryColor(forHue: 5) }
-    static var proRed: LCHColor { LCHColor.getPrimaryColor(forHue: 10) }
-    static var proTomato: LCHColor { LCHColor.getPrimaryColor(forHue: 20) }
-    static var proOrange: LCHColor { LCHColor.getPrimaryColor(forHue: 35) }
-    static var proBrown: LCHColor { LCHColor.getPrimaryColor(forHue: 50) }
-    static var proGold: LCHColor { LCHColor.getPrimaryColor(forHue: 70) }
-    static var proYellow: LCHColor { LCHColor.getPrimaryColor(forHue: 85) }
-    static var proLime: LCHColor { LCHColor.getPrimaryColor(forHue: 100) }
-    static var proOlive: LCHColor { LCHColor.getPrimaryColor(forHue: 110) }
-    static var proGrass: LCHColor { LCHColor.getPrimaryColor(forHue: 125) }
-    static var proGreen: LCHColor { LCHColor.getPrimaryColor(forHue: 140) }
-    static var proMint: LCHColor { LCHColor.getPrimaryColor(forHue: 160) }
-    static var proCyan: LCHColor { LCHColor.getPrimaryColor(forHue: 175) }
-    static var proTeal: LCHColor { LCHColor.getPrimaryColor(forHue: 190) }
-    static var proBlue: LCHColor { LCHColor.getPrimaryColor(forHue: 210) }
-    static var proSky: LCHColor { LCHColor.getPrimaryColor(forHue: 235) }
-    static var proCobalt: LCHColor { LCHColor.getPrimaryColor(forHue: 250) }
-    static var proIndigo: LCHColor { LCHColor.getPrimaryColor(forHue: 270) }
-    static var proIris: LCHColor { LCHColor.getPrimaryColor(forHue: 292.5) }
-    static var proPurple: LCHColor { LCHColor.getPrimaryColor(forHue: 310) }
-    static var proViolet: LCHColor { LCHColor.getPrimaryColor(forHue: 325) }
-    static var proPlum: LCHColor { LCHColor.getPrimaryColor(forHue: 342.5) }
-    static var proRuby: LCHColor { LCHColor.getPrimaryColor(forHue: 355) }
+    static var proGray: ProColor { .primary(forHue: 0, isGrayscale: true) }
+    static var proPink: ProColor { .primary(forHue: 5) }
+    static var proRed: ProColor { .primary(forHue: 10) }
+    static var proTomato: ProColor { .primary(forHue: 20) }
+    static var proOrange: ProColor { .primary(forHue: 35) }
+    static var proBrown: ProColor { .primary(forHue: 50) }
+    static var proGold: ProColor { .primary(forHue: 70) }
+    static var proYellow: ProColor { .primary(forHue: 85) }
+    static var proLime: ProColor { .primary(forHue: 100) }
+    static var proOlive: ProColor { .primary(forHue: 110) }
+    static var proGrass: ProColor { .primary(forHue: 125) }
+    static var proGreen: ProColor { .primary(forHue: 140) }
+    static var proMint: ProColor { .primary(forHue: 160) }
+    static var proCyan: ProColor { .primary(forHue: 175) }
+    static var proTeal: ProColor { .primary(forHue: 190) }
+    static var proBlue: ProColor { .primary(forHue: 210) }
+    static var proSky: ProColor { .primary(forHue: 235) }
+    static var proCobalt: ProColor { .primary(forHue: 250) }
+    static var proIndigo: ProColor { .primary(forHue: 270) }
+    static var proIris: ProColor { .primary(forHue: 292.5) }
+    static var proPurple: ProColor { .primary(forHue: 310) }
+    static var proViolet: ProColor { .primary(forHue: 325) }
+    static var proPlum: ProColor { .primary(forHue: 342.5) }
+    static var proRuby: ProColor { .primary(forHue: 355) }
 
     // Dictionary of all pro colors
-    static var allProHues: [String: LCHColor] {
+    static var allProHues: [String: ProColor] {
         [
             "Gray": proGray,
             "Pink": proPink,

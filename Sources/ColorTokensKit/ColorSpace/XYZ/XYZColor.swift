@@ -20,9 +20,7 @@ public struct XYZColor: Hashable, Sendable {
     }
 
     func sRGBCompand(_ v: CGFloat) -> CGFloat {
-        let absV = abs(v)
-        let out = absV > 0.0031308 ? 1.055 * pow(absV, 1 / 2.4) - 0.055 : absV * 12.92
-        return v > 0 ? out : -out
+        linearToSRGB(v)
     }
 
     func labCompand(_ v: CGFloat) -> CGFloat {

@@ -7,6 +7,13 @@
 import Foundation
 import CoreGraphics
 
+/// Apply sRGB gamma curve (linear → sRGB). Shared by XYZ and OKLab conversions.
+func linearToSRGB(_ v: CGFloat) -> CGFloat {
+    let absV = abs(v)
+    let out = absV > 0.0031308 ? 1.055 * pow(absV, 1.0 / 2.4) - 0.055 : absV * 12.92
+    return v > 0 ? out : -out
+}
+
 public extension CGFloat {
     /// Normalizes a hue value to the range 0-359.xx with consistent precision
     var normalizedHue: CGFloat {

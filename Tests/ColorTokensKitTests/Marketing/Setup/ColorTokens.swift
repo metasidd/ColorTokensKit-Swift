@@ -42,7 +42,7 @@ public extension Color {
     /// Used for tertiary backgrounds, inactive buttons, etc.
     static var backgroundTertiary: Color { Color.proGray.backgroundTertiary }
 
-    
+
     // MARK: - Surface colors
 
     /// Used for surfaces with opacity. Cards, pills, etc.
@@ -85,9 +85,9 @@ public extension Color {
     static var outlineTertiary: Color { Color.proGray.outlineTertiary }
 }
 
-public extension LCHColor {
+public extension ProColor {
     // MARK: - Foreground colors
-    
+
     /// Used for primary text, selected icons, etc.
     var foregroundPrimary: Color {
         Color(light: _1000.toColor(), dark: _50.toColor())
@@ -104,41 +104,41 @@ public extension LCHColor {
     }
 
     // MARK: - Inverted foreground colors
-    
+
     /// Used for primary text on dark backgrounds, selected icons, etc.
-    var invertedForegroundPrimary: Color { 
-        Color(light: _50.toColor(), dark: _1000.toColor()) 
+    var invertedForegroundPrimary: Color {
+        Color(light: _50.toColor(), dark: _1000.toColor())
     }
 
     /// Used for secondary text on dark backgrounds, unselected icons, etc.
-    var invertedForegroundSecondary: Color { 
-        Color(light: _150.toColor(), dark: _800.toColor()) 
+    var invertedForegroundSecondary: Color {
+        Color(light: _150.toColor(), dark: _800.toColor())
     }
 
     /// Used for tertiary text on dark backgrounds, disabled icons, etc.
-    var invertedForegroundTertiary: Color { 
-        Color(light: _250.toColor(), dark: _700.toColor()) 
+    var invertedForegroundTertiary: Color {
+        Color(light: _250.toColor(), dark: _700.toColor())
     }
 
     // MARK: - Background colors
-    
+
     /// Used for main content background, app background, etc.
-    var backgroundPrimary: Color { 
-        Color(light: _50.toColor(), dark: _1000.toColor()) 
+    var backgroundPrimary: Color {
+        Color(light: _50.toColor(), dark: _1000.toColor())
     }
 
     /// Used for secondary content background, card background, etc.
-    var backgroundSecondary: Color { 
-        Color(light: _100.toColor(), dark: _800.toColor()) 
+    var backgroundSecondary: Color {
+        Color(light: _100.toColor(), dark: _800.toColor())
     }
 
     /// Used for tertiary content background, modal background, etc.
-    var backgroundTertiary: Color { 
-        Color(light: _200.toColor(), dark: _700.toColor()) 
+    var backgroundTertiary: Color {
+        Color(light: _200.toColor(), dark: _700.toColor())
     }
-    
+
     // MARK: - Surface colors
-    
+
     /// Used for primary surfaces like cards, sheets, etc.
     var surfacePrimary: Color {
         Color(light: _200.toColor(), dark: _700.toColor()).opacity(0.5)
@@ -155,7 +155,7 @@ public extension LCHColor {
     }
 
     // MARK: - Inverted surface colors
-    
+
     /// Used for primary surfaces on dark backgrounds like cards, sheets, etc.
     var invertedSurfacePrimary: Color {
         Color(light: _400.toColor(), dark: _600.toColor()).opacity(0.4)
@@ -167,36 +167,36 @@ public extension LCHColor {
     }
 
     // MARK: - Inverted background colors
-    
+
     /// Used for main content background on dark backgrounds, app background, etc.
-    var invertedBackgroundPrimary: Color { 
-        Color(light: _900.toColor(), dark: _50.toColor()) 
+    var invertedBackgroundPrimary: Color {
+        Color(light: _900.toColor(), dark: _50.toColor())
     }
 
     /// Used for secondary content background on dark backgrounds, card background, etc.
-    var invertedBackgroundSecondary: Color { 
-        Color(light: _800.toColor(), dark: _150.toColor()) 
+    var invertedBackgroundSecondary: Color {
+        Color(light: _800.toColor(), dark: _150.toColor())
     }
 
     /// Used for tertiary content background on dark backgrounds, modal background, etc.
-    var invertedBackgroundTertiary: Color { 
-        Color(light: _650.toColor(), dark: _250.toColor()) 
+    var invertedBackgroundTertiary: Color {
+        Color(light: _650.toColor(), dark: _250.toColor())
     }
 
     // MARK: - Outline colors
-    
+
     /// Used for primary outlines, borders, etc.
-    var outlinePrimary: Color { 
-        Color(light: _300.toColor(), dark: _700.toColor()) 
+    var outlinePrimary: Color {
+        Color(light: _300.toColor(), dark: _700.toColor())
     }
 
     /// Used for secondary outlines, borders, etc.
-    var outlineSecondary: Color { 
+    var outlineSecondary: Color {
         Color(light: _200.toColor(), dark: _800.toColor())
     }
 
     /// Used for tertiary outlines, borders, etc.
-    var outlineTertiary: Color { 
-        Color(light: _100.toColor(), dark: _900.toColor()) 
+    var outlineTertiary: Color {
+        Color(light: _100.toColor(), dark: _900.toColor())
     }
 }

@@ -1,245 +1,308 @@
-# 🌈 ColorTokensKit
+# ColorTokensKit
 
 [![License: MIT](https://cdn.prod.website-files.com/5e0f1144930a8bc8aace526c/65dd9eb5aaca434fac4f1c34_License-MIT-blue.svg)](/LICENSE)
 
-By designers, for developers. 
+By designers, for developers.
 
-![Cover Image](/Tests/ColorTokensKitTests/Exports/cover-image.png)
+**Perceptually uniform color tokens for Swift and SwiftUI.** Generate accessible, themeable color ramps from any hue using OKLCH and CIELab LCH. Works on iOS, macOS, tvOS, watchOS, and visionOS.
 
-# Features
+![Cover Image](/Assets/cover-image.png)
 
-ColorTokensKit is a powerful design library that extends Swift's native capabilities by offering ergonomic access to the LCH color system, and thousands of accessible colors. 
+## Why does this exist?
 
-- 📱 Designed for Apple apps (iOS 16+, macOS 13+, tvOS 16+, watchOS 9+, visionOS 1+)
-- ⭐️ Easy to use color token APIs
-- 🎨 Pre-defined LCH color palettes
-- 🤝 Built-in accessibility: WCAG 2.x and APCA contrast ratios
-- 🌘 Built-in dark mode capability
-- 🌈 Built-in theming for all apps
-- 🎛️ Easy conversions between RGB/HSL/LCH/LAB/XYZ spaces
-- 🔒 Thread-safe and Sendable — ready for async/await
-- 🕊️ No dependencies
+Swift's native color system gives you RGB and HSL. That's fine for picking a single color, but the moment you need a *system* of colors — consistent brightness across hues, accessible contrast, dark mode, theming — it falls apart. Two colors with the same "lightness" in RGB can look wildly different to the human eye.
 
-> 💚 The broader concept of LCH-based design tokens is widely trusted, and utilized by leading companies like [Linear](https://linear.app/blog/how-we-redesigned-the-linear-ui), [Slack](https://slack.design/articles/a-new-visual-language-for-slack/), [Stripe](https://stripe.com/blog/accessible-color-systems), [Zapier](https://zapier.com/blog/lch-easier-accessibility-prettier-colors/) and many others.
+ColorTokensKit fixes this by building on perceptually uniform color spaces (OKLCH and CIELab LCH). You pick a hue, and we generate an entire palette that just *works*.
 
-# 🍎 Why Native Apple Colors Aren't Enough
+- **Thousands of colors from a single hue** — 20-stop ramps generated automatically
+- **Perceptual uniformity** — equal lightness values actually look equally bright
+- **Built-in accessibility** — WCAG 2.x and APCA contrast ratio utilities
+- **Automatic dark mode** — every token resolves to light and dark variants
+- **Theming in one line** — pass any `ProColor` and get a complete, accessible palette
+- **OKLCH + CIELab LCH** — two perceptually uniform color spaces, plus RGB, XYZ, LAB, OKLab conversions
+- **Thread-safe and Sendable** — ready for Swift concurrency
+- **Zero dependencies** — pure Swift, SPM only
 
-Swift's native color system provides only basic functionality for color representation. Native colors are limited to RGB and HSL, which do not offer perceptual uniformity. This can lead to inconsistent color experiences across different devices and environments. 
+### Platform Support
 
-Additionally, native colors do not inherently support accessible contrast ratios, dark mode or theming, making it challenging to maintain a cohesive design system. ColorTokensKit addresses these limitations by leveraging the LCH color system, which provides a more intuitive and flexible approach to color management.
+| Platform | Minimum Version |
+|----------|----------------|
+| iOS | 16.0+ |
+| macOS | 13.0+ |
+| tvOS | 16.0+ |
+| watchOS | 9.0+ |
+| visionOS | 1.0+ |
+
+> The broader concept of LCH-based design tokens is widely trusted by companies like [Linear](https://linear.app/blog/how-we-redesigned-the-linear-ui), [Slack](https://slack.design/articles/a-new-visual-language-for-slack/), [Stripe](https://stripe.com/blog/accessible-color-systems), [Zapier](https://zapier.com/blog/lch-easier-accessibility-prettier-colors/) and many others.
+
+## The Problem
+
+We've all been here:
 
 ```swift
 Text("The Everything Company")
-  .background(Color(hex: "#FA3499")) // ❌ Please don't do this
-  .background(Color(red: 0.5, green: 0.5, blue: 1.0)) // ❌ Messy & unscalable
-  .background(Color.red.secondary) // ❌ No control, limited to few colors
-  .background(Color.brandColorBackground) // ❌ Needs many variables, hard to maintain, not responsive to dark mode, probably not accessible
-  .background(Color.brandColor.backgroundPrimary) // ✅ Semantic naming, accessible, responsive to dark mode, and ergonomic. 
+  .background(Color(hex: "#FA3499"))                    // Please don't do this
+  .background(Color(red: 0.5, green: 0.5, blue: 1.0))  // Messy & unscalable
+  .background(Color.red.secondary)                      // No control, limited to a few colors
+  .background(Color.brandColorBackground)               // Needs many variables, hard to maintain
+  .background(Color.brandColor.backgroundPrimary)       // Semantic, accessible, dark mode, ergonomic
 ```
 
-# 🤔 But wait, what are design tokens?
-Design tokens are the fundamental building blocks of a design system. They represent the smallest, atomic decisions in your UI, such as colors, typography, spacing, and more. In the context of ColorTokensKit, we focus just on colors. 
+## But wait, what are design tokens?
 
-![Color Grid](/Tests/ColorTokensKitTests/Exports/color-grid.png)
+Design tokens are the smallest, atomic decisions in your UI — the building blocks everything else is made of. Think of them as your single source of truth for colors, so you never have to argue about hex values in a PR again.
 
-# 🌈 What's LCH though? 
-The LCH (**L**ightness, **C**hroma, **H**ue) color system offers significant advantages over RGB and HSL based initializers. LCH is "perceptually uniform", meaning changes in color values correspond more closely to how humans perceive color differences. This makes it easier to create harmonious color palettes, ensure proper contrast for accessibility, and make predictable color adjustments. Unlike RGB or HSL, LCH also supports a wider gamut of colors and provides more intuitive control over color properties, making it an excellent choice for modern iOS app development.
+```
+                         Your Brand Hue (e.g. Blue)
+                                  |
+                                  v
+                    +--------------------------+
+                    |   Color Ramp Generator   |
+                    |  20 stops, light → dark  |
+                    +--------------------------+
+                                  |
+                  +---------------+---------------+
+                  |               |               |
+                  v               v               v
+             _50 (light)    _500 (mid)     _1000 (dark)
+                  |               |               |
+                  v               v               v
+          +-------------+ +-------------+ +-------------+
+          | background  | | foreground  | | outline     |
+          | Primary     | | Secondary   | | Tertiary    |
+          | (light/dark)| | (light/dark)| | (light/dark)|
+          +-------------+ +-------------+ +-------------+
+```
 
-![Color System Comparison](/Tests/ColorTokensKitTests/Exports/color-system-comparison.png)
+In ColorTokensKit, each token maps a semantic role (like "primary background" or "secondary text") to the right shade for both light and dark mode. Change one hue, and your entire app updates.
 
-# ✨ Can you give me a quick example?
-Imagine you have a primary color used for your brand. This color is used in various levels of brightness and saturation in various areas (backgrounds, text, hovers, buttons, onpress states etc). 
+## How It Works
 
-Instead of hardcoding each of the color values in multiple places, you define a design token named `brandColor`. 
+ColorTokensKit generates 20-stop color ramps for any hue using hand-tuned palette data interpolated in perceptually uniform color spaces. Each stop is a precise lightness level from near-white (`_50`) to near-black (`_1000`).
+
+The `ProColor` type wraps these ramps with semantic accessors — `.foregroundPrimary`, `.backgroundSecondary`, `.outlineTertiary` — that automatically resolve to the right stop for light and dark mode.
+
+### What's OKLCH?
+
+![Color System Comparison](/Assets/color-system-comparison.png)
+
+**OKLCH** is Bjorn Ottosson's perceptually uniform color space, and it's what we use under the hood. It fixes CIELab's hue linearity issues — blues stay blue when you adjust chroma, instead of drifting toward purple. It's also what CSS Color Level 4, Tailwind v4, and most modern design tools have adopted.
+
+**CIELab LCH** is the classic perceptually uniform space. Still fully available for conversions and ramp generation if you prefer it.
+
+### LCH Color Grid
+
+![LCH Color Grid](/Assets/color-grid.png)
+
+### OKLCH Color Grid
+
+![OKLCH Color Grid](/Assets/oklch-color-grid.png)
+
+## Quick Start
+
+### Installation
+
+Add ColorTokensKit via Swift Package Manager:
+
+```
+https://github.com/metasidd/ColorTokensKit-Swift.git
+```
+
+### Setup (3 steps, seriously)
+
+1. `import ColorTokensKit` in your files
+2. Copy [ColorTokens.swift](Tests/ColorTokensKitTests/Marketing/Setup/ColorTokens.swift) into your project, or define your own semantic tokens (it uses `ProColor` under the hood — backed by OKLCH)
+3. Start using `Color.proBlue.backgroundPrimary`, `Color.foregroundPrimary`, etc.
+
+That's it. You're ready to give your app a fresh coat of paint.
+
+### Define a Brand Color
 
 ```swift
+import ColorTokensKit
+
 extension Color {
-    var brandColor: LCHColor {
-        LCHColor(hex: "#FF04DA") // The hex would represent your brand color
+    static var brandColor: ProColor {
+        .primary(forHue: 210) // Any hue 0-360, or use a preset like Color.proBlue
     }
 }
 ```
 
-Now, whenever the brand color needs to be used, you just use `brandColor.backgroundPrimary`. If the hue needs to change, you update just one token value, and all instances of `brandColor` in your app automatically update to the new colors.
+Now use it everywhere — backgrounds, text, outlines — with automatic dark mode:
 
 ```swift
 VStack {
-  Text("The Everything Company")
-    .foregroundStyle(Color.brandColor.foregroundPrimary) // ✅ A dark text color that's accessible by default
-  }
-  .padding(8)
-  .background(Color.brandColor.backgroundPrimary) // ✅ A balanced background color that's accessible
-  .overlay(
-    RoundedRectangle(cornerRadius: 16)
-      .stroke(Color.brandColor.outlineTertiary, lineWidth: 1) // ✅ A suitable outline that's not too dark or light
-  )
+    Text("The Everything Company")
+        .foregroundStyle(Color.brandColor.foregroundPrimary)
 }
+.padding(8)
+.background(Color.brandColor.backgroundPrimary)
+.overlay(
+    RoundedRectangle(cornerRadius: 16)
+        .stroke(Color.brandColor.outlineTertiary, lineWidth: 1)
+)
 ```
 
-And VOILA! You also now support dark mode out of the box.
+And voila — dark mode works out of the box. No extra code.
 
-# 📦 Ready to get started?
+## 23 Built-in Pro Colors
 
-- **Step 1:** Install with SPM. Use `https://github.com/metasidd/ColorTokensKit-Swift.git` to install the package in your project.
-- **Step 2:** Add `import ColorTokensKit` to all files that need these tokens.
-- **Step 3:** Copy-paste [this file](https://github.com/metasidd/ColorTokensKit-Swift/blob/main/Tests/ColorTokensKitTests/Marketing/Setup/ColorTokens.swift) into your project, OR define your own tokens.
-- **Step 4:** That's all! You're ready to give your app a fresh coat of paint.
-
-# 🎁 More examples for you to learn from
-
-## A Simple Card View
-
-This is a simple card view that uses the basic gray ramp without using any theming shenanigans.
+We ship 23 hand-tuned hues so you can get started without choosing anything:
 
 ```swift
-import ColorTokensKit
+Color.proGray    Color.proPink    Color.proRed      Color.proTomato
+Color.proOrange  Color.proBrown   Color.proGold     Color.proYellow
+Color.proLime    Color.proOlive   Color.proGrass    Color.proGreen
+Color.proMint    Color.proCyan    Color.proTeal     Color.proBlue
+Color.proSky     Color.proCobalt  Color.proIndigo   Color.proIris
+Color.proPurple  Color.proViolet  Color.proPlum     Color.proRuby
+```
 
+Each one is a `ProColor` with 20 stops (`_50` through `_1000`) and the full set of semantic tokens for foreground, background, surface, outline, and their inverted variants.
+
+## Theming
+
+This is where it gets fun. Pass any `ProColor` as a theme, and your entire component gets a coherent, accessible color system — for free:
+
+![Simple Card View](/Assets/simple-card-view.png)
+![Simple Card Dark Mode View](/Assets/simple-card-dark-mode-view.png)
+
+```swift
 struct CardView: View {
+    let theme: ProColor
+
     var body: some View {
         VStack {
-            Text("Welcome to ColorTokensKit")
-                .foregroundStyle(Color.foregroundPrimary) // Uses the most accessible color available for text
-            Text("This is a subtitle")
-                .foregroundStyle(Color.foregroundSecondary) // Uses a lighter shade of the foreground color
+            Text("Title")
+                .foregroundStyle(theme.foregroundPrimary)
+            Text("Subtitle")
+                .foregroundStyle(theme.foregroundSecondary)
         }
-        .background(Color.backgroundPrimary) // Uses the primary background color available
-        .shadow(color: Color.outlineSecondary, radius: 5) // Uses the primary outline color available as a shadow
+        .background(theme.backgroundPrimary)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(theme.outlineTertiary, lineWidth: 1)
+        )
     }
 }
+
+// Usage — swap the theme, everything updates
+CardView(theme: Color.proBlue)
+CardView(theme: Color.proGold)
+CardView(theme: .primary(forHue: 173)) // Any custom hue
 ```
 
-## Pills ([Example Code](/Tests/ColorTokensKitTests/Marketing/Views/PillView.swift))
+![Pill View](/Assets/pill-view.png)
 
-The `PillView` demonstrates the benefits of using ColorTokensKit's color tokens. You can use the pre-defined color tokens below (like `Color.backgroundPrimary`, `Color.foregroundTertiary`, `Color.outlinePrimary`), or use the custom tokens you created in Step 2.
+## Semantic Tokens
 
-![Pill View](/Tests/ColorTokensKitTests/Exports/pill-view.png)
+Every `ProColor` provides these semantic tokens, each resolving to light/dark mode automatically:
 
-## Themes & Dark mode ([Example Code](/Tests/ColorTokensKitTests/Marketing/Views/ThemedCardView.swift))
+| Category | Tokens |
+|----------|--------|
+| **Foreground** | `foregroundPrimary`, `foregroundSecondary`, `foregroundTertiary` |
+| **Inverted Foreground** | `invertedForegroundPrimary`, `invertedForegroundSecondary`, `invertedForegroundTertiary` |
+| **Background** | `backgroundPrimary`, `backgroundSecondary`, `backgroundTertiary` |
+| **Inverted Background** | `invertedBackgroundPrimary`, `invertedBackgroundSecondary`, `invertedBackgroundTertiary` |
+| **Surface** | `surfacePrimary` (50% opacity), `surfaceSecondary` (30%), `surfaceTertiary` (10%) |
+| **Inverted Surface** | `invertedSurfacePrimary` (40%), `invertedSurfaceSecondary` (20%) |
+| **Outline** | `outlinePrimary`, `outlineSecondary`, `outlineTertiary` |
 
-Theming is made extremely ergonomic with this approach. You can pass theme values as needed, and all children elements are dynamically assigned colors depending on the LCH color chosen.
+## Accessibility
 
-![Simple Card View](/Tests/ColorTokensKitTests/Exports/simple-card-view.png)
-![Simple Card Dark Mode View](/Tests/ColorTokensKitTests/Exports/simple-card-dark-mode-view.png)
+### Contrast Ratios
 
-```swift
-import ColorTokensKit
-import SwiftUI
-
-struct ContentView: View {
-  var body: some View {
-    CardView() // Themeless
-    CardView(theme: Color.proMint) // Mint theme
-    CardView(theme: Color.proBlue) // Blue theme
-    CardView(theme: Color.proGold) // Gold theme
-    CardView(theme: Color.proRuby) // Ruby theme
-    CardView(theme: LCHColor(hex: "#abcdef")) // Custom theme based on hex values
-  }
-}
-
-struct CardView: View {
-  let title: String
-  let subtitle: String
-  let theme: LCHColor // This could very well be an `@Environment var`. Whatever floats your boat.
-
-  init(
-    title: String, 
-    subtitle: String,
-    theme: LCHColor = Color.proGray // Default component could be themeless, or have a default hue
-    ) {
-      self.title = title
-      self.subtitle = subtitle
-      self.theme = theme
-  }
-
-  var body: some View {
-    VStack {
-      Text(title)
-        .foregroundStyle(theme.foregroundPrimary) // Uses the darkest text color available
-      Text(subtitle)
-        .foregroundStyle(theme.foregroundSecondary) // Since it's a secondary piece of text, it uses a lighter shade available
-    }
-    .background(
-      RoundedRectangle(cornerRadius: 16) // Creates a rounded rectangle container that works in light & dark mode
-        .fill(theme.backgroundPrimary) // Uses `backgroundPrimary` as its base, resulting in a white background
-        .stroke(theme.outlineTertiary, lineWidth: 1) // Uses the lightest gray outline for a border
-    )
-  }
-}
-```
-
-# 🛠️ Utilities
-
-In addition to just using color tokens, we offer some easy conversions, interpolations, and accessibility tools.
-
-## Contrast Ratios
-
-Check if your color combinations are accessible using WCAG 2.x or APCA contrast.
+Making sure your colors are accessible shouldn't require a separate tool. Check WCAG 2.x or APCA contrast right in your code:
 
 ```swift
-let background = LCHColor(l: 95, c: 5, h: 210)
-let text = LCHColor(l: 20, c: 10, h: 210)
+let bg = RGBColor(r: 1, g: 1, b: 1, alpha: 1)
+let text = RGBColor(r: 0.1, g: 0.1, b: 0.1, alpha: 1)
 
-// WCAG 2.x contrast ratio (1–21, higher is better)
-let wcagRatio = background.contrastRatio(to: text) // Uses .wcag2 by default
-print(wcagRatio) // e.g. 12.5 — passes AAA
+// WCAG 2.x (range 1-21, higher is better)
+let wcag = bg.contrastRatio(to: text) // ~18.4 — passes AAA
 
-// APCA perceptual contrast (signed Lc value)
-// Positive = dark text on light bg, negative = light text on dark bg
-let apcaLc = background.contrastRatio(to: text, method: .apca)
-print(apcaLc) // e.g. 85.3 — passes for body text
+// APCA (signed Lc value, positive = dark on light)
+let apca = bg.contrastRatio(to: text, method: .apca) // ~106 — passes for all text sizes
 
-// Also works on SwiftUI Colors
+// Works on any color type
 let ratio = Color.white.contrastRatio(to: Color.black) // 21.0
 ```
 
-## Interpolating
-Transitioning colors using LCH offer much smoother color values.
+## Color Space Conversions
+
+Need to drop down to raw color values? Convert freely between RGB, LCH, OKLCH, OKLab, LAB, XYZ, HEX, and HSL:
 
 ```swift
-let color1 = LCHColor(l: 40, c: 30, h: 60)
-let color2 = LCHColor(l: 60, c: 60, h: 90)
-let interpolatedColor = color1.lerp(color2, t: 0.5)
-print(interpolatedColor) // Output: LCHColor(l: 50, c: 45, h: 75)
-```
-
-## Conversions
-ColorTokensKit allows you to convert between different color types — RGB, HSL, HEX, LCH, LAB, XYZ. Here are some simple examples:
-
-```swift
-// HEX to Color
+// HEX
 let color = Color(hex: "#abcdef")
 
-// HEX to LCH Color
-let lchColor = LCHColor(hex: "#abcdef")
-
-// HSL to Color
+// HSL
 let hslColor = Color(h: 50, s: 0.5, l: 0.5)
 
-// LCH to SwiftUI Color
-let lchColor = LCHColor(l: 40, c: 30, h: 60)
-let swiftUIColor = lchColor.toColor()
+// OKLCH
+let oklch = OKLCHColor(l: 0.7, c: 0.15, h: 210)
+let swiftUIColor = oklch.toColor()
 
-// LCH to RGB
-let rgbColor = lchColor.toRGB()
+// LCH
+let lch = LCHColor(l: 70, c: 30, h: 210)
+let rgb = lch.toRGB()
 
-// Color to LCH
-let lch = Color.blue.toLCH()
-
-// Color to HEX string
-let hex = Color.blue.getHexString() // e.g. "0000FF"
+// Any Color to any space
+let blue = Color.blue
+blue.toOKLCH()  // OKLCHColor
+blue.toLCH()    // LCHColor
+blue.toOKLab()  // OKLabColor
+blue.toLAB()    // LABColor
+blue.toXYZ()    // XYZColor
+blue.toRGB()    // RGBColor
 ```
 
-# Future Ideas
-- [ ] OKLCH color space support (fixes CIELab hue linearity issues)
+## Interpolation
+
+Smooth color transitions that don't go muddy in the middle? That's what perceptually uniform interpolation gives you:
+
+```swift
+// OKLCH interpolation (recommended)
+let a = OKLCHColor(l: 0.4, c: 0.12, h: 60)
+let b = OKLCHColor(l: 0.8, c: 0.15, h: 200)
+let mid = a.lerp(b, t: 0.5) // Smooth midpoint with shortest hue path
+
+// LCH interpolation
+let c = LCHColor(l: 40, c: 30, h: 60)
+let d = LCHColor(l: 60, c: 60, h: 90)
+let midLCH = c.lerp(d, t: 0.5)
+```
+
+## Architecture
+
+For the curious, here's how the types connect:
+
+```
+ProColor (stable public API, backed by OKLCH)
+  |-- OKLCHColor <-> OKLabColor <-> RGBColor <-> Color
+  |-- LCHColor   <-> LABColor   <-> XYZColor <-> RGBColor
+```
+
+- **ProColor** — the recommended type for design tokens. Wraps OKLCH internally, so we can evolve the internals without breaking your code.
+- **OKLCHColor / OKLabColor** — OKLCH polar and OKLab cartesian forms (Ottosson's reference).
+- **LCHColor / LABColor / XYZColor** — CIELab color spaces.
+- **RGBColor** — sRGB, bridges to/from SwiftUI `Color`.
+- **ColorRampGenerator** — generates 20-stop ramps from hand-tuned palette data.
+
+## Future Ideas
+
+Got a feature request? [Open an issue](https://github.com/metasidd/ColorTokensKit-Swift/issues) — we'd love to hear from you.
+
 - [ ] Delta E color difference API (CIE76 / CIEDE2000)
 - [ ] Non-linear lightness curves for ramp generation
-- [ ] Semantic token layer (primitive → semantic → component)
-- [ ] `.lighten()`, `.darken()`, `.saturate()` and `.desaturate()` for LCH Colors
-- [ ] Smooth gradients using LCH colors
-- [ ] Color blindness simulation
+- [ ] Semantic token layer in main library (primitive -> semantic -> component)
+- [ ] `.lighten()`, `.darken()`, `.saturate()`, `.desaturate()` modifiers
+- [ ] Smooth gradients using perceptually uniform interpolation
+- [ ] Color blindness simulation (Brettel/Vienot)
 - [ ] HSL/HSV color space types
 - [ ] Display P3 gamut awareness
-- [ ] Example Figma file
+- [ ] OKLCH-native palette data (currently converts from LCH)
 
-# License
-The source code for the site is licensed under the MIT license, which you can find in the MIT-LICENSE.txt file.
+## License
+
+MIT License. See [LICENSE](/LICENSE) for details.

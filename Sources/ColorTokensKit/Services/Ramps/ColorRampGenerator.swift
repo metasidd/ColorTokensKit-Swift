@@ -21,6 +21,7 @@ public class ColorRampGenerator {
     static let shared = ColorRampGenerator()
 
     private static var interpolatedRamps: [String: [LCHColor]] = [:]
+    private static var oklchInterpolatedRamps: [String: [OKLCHColor]] = [:]
     private static let cacheLock = NSLock()
     private let colorPaletteData: ColorPaletteData
 
@@ -109,6 +110,30 @@ public class ColorRampGenerator {
         // Cache in static dictionary
         ColorRampGenerator.cacheLock.lock()
         ColorRampGenerator.interpolatedRamps[cacheKey] = result
+        ColorRampGenerator.cacheLock.unlock()
+
+        return result
+    }
+
+    /// Generates a color ramp in OKLCH space for a given hue value.
+    /// Uses the LCH palette data internally and converts each stop to OKLCH.
+    /// Results are cached to avoid repeated conversion.
+    public func getOKLCHColorRamp(forHue targetHue: Double, steps: Int? = nil, isGrayscale: Bool = false) -> [OKLCHColor] {
+        let steps = steps ?? ColorConstants.rampStops
+        let normalizedTargetHue = targetHue.normalizedHue
+        let cacheKey = isGrayscale ? "Gray-\(steps)" : "H\(normalizedTargetHue)-\(steps)"
+
+        ColorRampGenerator.cacheLock.lock()
+        if let cached = ColorRampGenerator.oklchInterpolatedRamps[cacheKey] {
+            ColorRampGenerator.cacheLock.unlock()
+            return cached
+        }
+        ColorRampGenerator.cacheLock.unlock()
+
+        let result = getColorRamp(forHue: targetHue, steps: steps, isGrayscale: isGrayscale).map { $0.toRGB().toOKLCH() }
+
+        ColorRampGenerator.cacheLock.lock()
+        ColorRampGenerator.oklchInterpolatedRamps[cacheKey] = result
         ColorRampGenerator.cacheLock.unlock()
 
         return result

@@ -99,6 +99,13 @@ public extension LCHColor {
     }
 }
 
+public extension OKLCHColor {
+    /// Contrast ratio between two OKLCH colors
+    func contrastRatio(to other: OKLCHColor, method: ContrastMethod = .wcag2) -> CGFloat {
+        return toRGB().contrastRatio(to: other.toRGB(), method: method)
+    }
+}
+
 public extension Color {
     /// Contrast ratio between two SwiftUI colors
     func contrastRatio(to other: Color, method: ContrastMethod = .wcag2) -> CGFloat {
