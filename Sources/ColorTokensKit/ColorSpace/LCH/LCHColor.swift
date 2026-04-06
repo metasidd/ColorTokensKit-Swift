@@ -7,7 +7,7 @@
 import Foundation
 import SwiftUI
 
-public struct LCHColor: Hashable, Equatable {
+public struct LCHColor: Hashable, Equatable, Sendable {
     public let l: CGFloat // 0..100. Lightness
     public let c: CGFloat // 0..128. Chroma
     public let h: CGFloat // 0..360. Hue

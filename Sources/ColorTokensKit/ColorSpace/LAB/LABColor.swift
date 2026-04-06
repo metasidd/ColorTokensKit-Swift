@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct LABColor: Hashable {
+public struct LABColor: Hashable, Sendable {
     public let l: CGFloat //    0..100
     public let a: CGFloat // -128..128
     public let b: CGFloat // -128..128

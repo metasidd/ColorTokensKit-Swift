@@ -7,7 +7,7 @@
 import Foundation
 import SwiftUI
 
-public struct RGBColor: Hashable {
+public struct RGBColor: Hashable, Sendable {
     public let r: CGFloat // 0..1
     public let g: CGFloat // 0..1
     public let b: CGFloat // 0..1

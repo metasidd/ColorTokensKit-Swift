@@ -26,9 +26,8 @@ public extension LCHColor {
 
     /// Gets a color at specified index in the ramp
     func getColor(at index: Int) -> LCHColor {
-        let rampGenerator = ColorRampGenerator()
         let isGrayscale = c <= 0.1
-        let ramp = rampGenerator.getColorRamp(forHue: h, isGrayscale: isGrayscale)
+        let ramp = ColorRampGenerator.shared.getColorRamp(forHue: h, isGrayscale: isGrayscale)
         let clampedIndex = min(index, ramp.count - 1)
         return ramp[clampedIndex]
     }
@@ -36,8 +35,7 @@ public extension LCHColor {
     /// Creates primary color for given hue
     static func getPrimaryColor(forHue hue: Double, isGrayscale: Bool = false) -> LCHColor {
         let steps = ColorConstants.rampStops
-        let rampGenerator = ColorRampGenerator()
-        let dataPoints = rampGenerator.getColorRamp(forHue: hue, steps: steps, isGrayscale: isGrayscale)
+        let dataPoints = ColorRampGenerator.shared.getColorRamp(forHue: hue, steps: steps, isGrayscale: isGrayscale)
         let primaryColor = dataPoints[Int(steps / 2) - 2]
 
         return LCHColor(
