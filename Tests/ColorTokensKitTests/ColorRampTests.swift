@@ -1,9 +1,10 @@
 @testable import ColorTokensKit
 import XCTest
+import SwiftUI
 
 final class ColorRampTests: XCTestCase {
 
-    // MARK: - Ramp Generation
+    // MARK: - LCH Ramp Generation
 
     func testRampGeneratesCorrectNumberOfStops() {
         let generator = ColorRampGenerator()
@@ -46,6 +47,23 @@ final class ColorRampTests: XCTestCase {
         }
     }
 
+    // MARK: - OKLCH Ramp Generation
+
+    func testOKLCHRampGeneratesCorrectNumberOfStops() {
+        let generator = ColorRampGenerator()
+        let ramp = generator.getOKLCHColorRamp(forHue: 210)
+        XCTAssertEqual(ramp.count, ColorConstants.rampStops)
+    }
+
+    func testOKLCHRampLightnessDecreases() {
+        let generator = ColorRampGenerator()
+        let ramp = generator.getOKLCHColorRamp(forHue: 210)
+        for i in 0..<(ramp.count - 1) {
+            XCTAssertGreaterThanOrEqual(ramp[i].l, ramp[i + 1].l,
+                "OKLCH lightness should decrease: stop \(i) (L=\(ramp[i].l)) >= stop \(i+1) (L=\(ramp[i+1].l))")
+        }
+    }
+
     // MARK: - Ramp Determinism
 
     func testRampIsDeterministic() {
@@ -66,25 +84,37 @@ final class ColorRampTests: XCTestCase {
         let blueRamp = generator.getColorRamp(forHue: 210)
         let redRamp = generator.getColorRamp(forHue: 10)
 
-        // Midpoint colors should have different hues
         let blueMiddle = blueRamp[blueRamp.count / 2]
         let redMiddle = redRamp[redRamp.count / 2]
         XCTAssertNotEqual(blueMiddle.h, redMiddle.h, "Blue and red ramps should have different hues")
     }
 
-    // MARK: - Named Stops API
+    // MARK: - Named Stops API (LCH)
 
-    func testNamedStopsAccessors() {
+    func testLCHNamedStopsAccessors() {
         let color = LCHColor(l: 50, c: 30, h: 210)
         let first = color._50
         let last = color._1000
-
-        XCTAssertGreaterThan(first.l, last.l,
-                             "_50 should be lighter than _1000")
+        XCTAssertGreaterThan(first.l, last.l, "_50 should be lighter than _1000")
     }
 
-    func testAllStopsReturns20Colors() {
+    func testLCHAllStopsReturns20Colors() {
         let color = LCHColor(l: 50, c: 30, h: 210)
+        let stops = color.allStops
+        XCTAssertEqual(stops.count, 20, "allStops should return 20 colors")
+    }
+
+    // MARK: - Named Stops API (OKLCH)
+
+    func testOKLCHNamedStopsAccessors() {
+        let color = OKLCHColor(l: 0.5, c: 0.1, h: 210)
+        let first = color._50
+        let last = color._1000
+        XCTAssertGreaterThan(first.l, last.l, "_50 should be lighter than _1000")
+    }
+
+    func testOKLCHAllStopsReturns20Colors() {
+        let color = OKLCHColor(l: 0.5, c: 0.1, h: 210)
         let stops = color.allStops
         XCTAssertEqual(stops.count, 20, "allStops should return 20 colors")
     }
@@ -95,8 +125,7 @@ final class ColorRampTests: XCTestCase {
         let hues = Color.allProHues
         XCTAssertGreaterThan(hues.count, 20, "Should have 20+ pro colors")
 
-        // Each color should have unique L/C/H values
-        var seen = Set<LCHColor>()
+        var seen = Set<ProColor>()
         for (name, color) in hues {
             XCTAssertFalse(seen.contains(color), "Pro color '\(name)' is a duplicate")
             seen.insert(color)
@@ -105,14 +134,14 @@ final class ColorRampTests: XCTestCase {
 
     func testProGrayIsLowChroma() {
         let gray = Color.proGray
-        XCTAssertLessThan(gray.c, 5, "proGray should have very low chroma, got \(gray.c)")
+        XCTAssertLessThan(gray.c, 0.02, "proGray should have very low chroma, got \(gray.c)")
     }
 
     func testProBlueHasBlueHue() {
         let blue = Color.proBlue
-        // Blue hue in LCH is roughly 250-280
-        XCTAssertGreaterThan(blue.h, 200, "proBlue hue should be in blue range, got \(blue.h)")
-        XCTAssertLessThan(blue.h, 290, "proBlue hue should be in blue range, got \(blue.h)")
+        // Blue hue in OKLCH is roughly 200-270
+        XCTAssertGreaterThan(blue.h, 190, "proBlue hue should be in blue range, got \(blue.h)")
+        XCTAssertLessThan(blue.h, 270, "proBlue hue should be in blue range, got \(blue.h)")
     }
 
     // MARK: - Edge Cases
@@ -131,7 +160,6 @@ final class ColorRampTests: XCTestCase {
     }
 
     func testRampAtArbitraryHue() {
-        // Hue between two palette entries should still produce valid ramp
         let generator = ColorRampGenerator()
         let ramp = generator.getColorRamp(forHue: 173.5)
         XCTAssertEqual(ramp.count, ColorConstants.rampStops)
@@ -145,6 +173,3 @@ final class ColorRampTests: XCTestCase {
         }
     }
 }
-
-// Access Color.proBlue etc. which are defined as returning LCHColor
-import SwiftUI

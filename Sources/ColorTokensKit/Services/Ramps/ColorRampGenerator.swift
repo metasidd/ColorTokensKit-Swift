@@ -114,6 +114,12 @@ public class ColorRampGenerator {
         return result
     }
 
+    /// Generates a color ramp in OKLCH space for a given hue value.
+    /// Uses the LCH palette data internally and converts each stop to OKLCH.
+    public func getOKLCHColorRamp(forHue targetHue: Double, steps: Int? = nil, isGrayscale: Bool = false) -> [OKLCHColor] {
+        return getColorRamp(forHue: targetHue, steps: steps, isGrayscale: isGrayscale).map { $0.toRGB().toOKLCH() }
+    }
+
     /// Finds the two color ramps that bound the target hue
     /// - Parameters:
     ///   - hue: Target hue value
