@@ -25,4 +25,14 @@ public extension Color {
     func toXYZ() -> XYZColor {
         RGBColor(color: self).toXYZ()
     }
+
+    /// Convert to OKLab color space
+    func toOKLab() -> OKLabColor {
+        RGBColor(color: self).toOKLab()
+    }
+
+    /// Convert to OKLCH color space
+    func toOKLCH() -> OKLCHColor {
+        RGBColor(color: self).toOKLCH()
+    }
 }

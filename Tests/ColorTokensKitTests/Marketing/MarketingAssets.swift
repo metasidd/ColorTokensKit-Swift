@@ -18,6 +18,7 @@ public struct MarketingAssets {
 
         // Generate each asset
         generateColorGrid(in: directory)
+        generateOKLCHColorGrid(in: directory)
         generateColorSystemComparison(in: directory)
         generateCoverImage(in: directory)
         generateSimpleCardViewImage(in: directory)
@@ -31,6 +32,12 @@ public struct MarketingAssets {
         logger.info("Generating color grid image...")
         let view = ColorGridView()
         saveImage(view, name: "color-grid", size: ImageSize.size, in: directory)
+    }
+
+    private static func generateOKLCHColorGrid(in directory: URL) {
+        logger.info("Generating OKLCH color grid image...")
+        let view = OKLCHColorGridView()
+        saveImage(view, name: "oklch-color-grid", size: ImageSize.size, in: directory)
     }
 
     private static func generateColorSystemComparison(in directory: URL) {
