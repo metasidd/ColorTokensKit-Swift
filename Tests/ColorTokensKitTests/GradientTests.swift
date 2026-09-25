@@ -67,6 +67,16 @@ final class GradientTests: XCTestCase {
         XCTAssertEqual(ProGradient.Easing.timingCurve(0.42, 0, 0.58, 1), .easeInOut)
     }
 
+    // Easing runs from the first color to the last. Eased per pair instead, a gradient would pause on every
+    // color and look striped: just before the middle color, the color must still be clearly changing.
+    func testEasingRunsOverTheWholeGradientSoItDoesNotPauseOnEachColor() {
+        let family = Color.proBlue
+        let stops = GradientStops.smooth([family._300.toColor(), family._500.toColor(), family._700.toColor()], blend: .vivid, easing: .smooth)
+        let justBefore = stop(nearest: 0.45, in: stops).color.resolvedOKLCH(for: .light).lightnessStar
+        let middle = family._500.toColor().resolvedOKLCH(for: .light).lightnessStar
+        XCTAssertGreaterThan(abs(justBefore - middle), 1.5)
+    }
+
     // Easing moves where the colors land, not which colors appear: the ends stay put and stops stay in order.
     func testEasingKeepsTheEndsAndTheOrder() {
         let stops = GradientStops.smooth([Color.proBlue._200.toColor(), Color.proBlue._800.toColor()], blend: .vivid, easing: .smooth)
