@@ -26,15 +26,11 @@ Conversion chain: `LCH <-> LAB <-> XYZ <-> RGB <-> Color`
 
 ### Palette data (`Sources/ColorTokensKit/Resources/ColorPalettes.json`)
 
-Hand-tuned LCH color stops for base hues (gray, pink, red, orange, etc.). Each palette is a dictionary of stop index -> `"lch(L% C H)"` string. Decoded by `ColorPaletteData` and cached by `ColorRampLoader`. Don't regenerate or reformat this file.
+Hand-tuned LCH color stops for base hues (gray, pink, red, orange, etc.). Each palette is a dictionary of stop index -> `"lch(L% C H)"` string. Decoded by `ColorPaletteData` and cached by `ColorRampLoader`. Only the gray ramp is read now; chromatic ramps come from `UniformRamp`. Don't regenerate or reformat this file.
 
 ### Color ramp generation (`Sources/ColorTokensKit/Services/Ramps/`)
 
-`ColorRampGenerator.getColorRamp(forHue:steps:isGrayscale:)` is the core engine. For a given target hue:
-
-1. Finds the two bounding palettes from the JSON data
-2. Interpolates between them based on hue proximity
-3. Returns an array of `LCHColor` stops (default 20 steps, from lightest to darkest)
+`ColorRampGenerator.getColorRamp(forHue:steps:isGrayscale:)` is the core engine. The hue is an OKLCH hue. `UniformRamp.ramp(hue:)` builds 20 stops (lightest to darkest) that share one CIELab L* and one OKLCH chroma per stop with every other hue — the two tables live in `UniformRamp`. A hue that can't reach a stop's chroma in sRGB gets as close as it can. Gray comes from the JSON.
 
 Results are cached in a static dictionary keyed by normalized hue + step count.
 
@@ -59,7 +55,7 @@ Full set includes foreground, inverted foreground, background, inverted backgrou
 
 ### Pro colors (`Color+ProColors.swift`)
 
-23 predefined colors (`Color.proBlue`, `Color.proRed`, etc.) mapped to specific hue values. Each resolves to the "primary" stop of a generated ramp (index `steps/2 - 2`).
+Gray plus 25 hues (`Color.proBlue`, `Color.proRed`, etc.) at OKLCH hues, each at the median hue nine color-naming sources give its name (see the comment in the file). Each resolves to the "primary" stop of a generated ramp (index `steps/2 - 2`).
 
 ### Platform support (`Sources/ColorTokensKit/Platform/`)
 

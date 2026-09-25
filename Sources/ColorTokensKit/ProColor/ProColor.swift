@@ -14,14 +14,13 @@ public struct ProColor: Hashable, Sendable {
     /// The underlying OKLCH representation
     let oklch: OKLCHColor
 
-    /// CIELab hue of the ramp `_50`…`_1000` index into. The palette is keyed by
-    /// CIELab hue; `oklch.h` is a different scale (up to ~40° apart in blues).
+    /// OKLCH hue of the ramp `_50`…`_1000` index into.
     let rampHue: Double
 
     let isGrayscale: Bool
 
     public init(oklch: OKLCHColor) {
-        self.init(oklch: oklch, rampHue: Double(oklch.toLCH().h), isGrayscale: oklch.c <= 0.005)
+        self.init(oklch: oklch, rampHue: Double(oklch.h), isGrayscale: oklch.c <= 0.005)
     }
 
     init(oklch: OKLCHColor, rampHue: Double, isGrayscale: Bool) {

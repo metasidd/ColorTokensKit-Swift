@@ -2,16 +2,9 @@
 // ColorRampGenerator.swift
 // ColorTokensKit
 //
-// Provides interpolation functionality between color ramps.
-// This allows smooth transitions between predefined colors while
-// maintaining perceptual uniformity and accessibility.
-//
-// The interpolator considers:
-// - Lightness progression
-// - Chroma intensity
-// - Hue shifts
-//
-// This enables generation of harmonious color ramps for any hue value.
+// Builds and caches 20-stop ramps. Chromatic ramps are keyed by OKLCH hue and
+// built by UniformRamp (shared lightness and chroma per stop); gray comes from
+// the palette data.
 //
 
 import Foundation
@@ -35,7 +28,7 @@ public class ColorRampGenerator {
 
     /// Generates a color ramp for a given hue value
     /// - Parameters:
-    ///   - targetHue: The target hue value (0-360 degrees)
+    ///   - targetHue: The target OKLCH hue (0-360 degrees)
     ///   - steps: Optional number of steps in the ramp (defaults to palette's step count)
     ///   - isGrayscale: Whether to generate a grayscale ramp (ignoring hue)
     /// - Returns: Array of LCHColors representing the color ramp
@@ -76,36 +69,8 @@ public class ColorRampGenerator {
             }
         }
 
-        // Get all ramps sorted by hue, excluding gray
-        let sortedRamps = colorPaletteData.colorRamps
-            .filter { $0.name != "gray" }
-            .sorted { ramp1, ramp2 in
-                // Use the "0" stop (lightest) for consistent hue comparison
-                let hue1 = ramp1.stops["0"]?.h ?? 0
-                let hue2 = ramp2.stops["0"]?.h ?? 0
-                return hue1 < hue2
-            }
-
-        // Find bounding ramps
-        let (lowerRamp, upperRamp) = findBoundingRamps(forHue: targetHue, in: sortedRamps)
-
-        // Get the "0" stop (lightest) to determine hues consistently
-        let lowerHue = lowerRamp.stops["0"]?.h ?? 0
-        let upperHue = upperRamp.stops["0"]?.h ?? 0
-
-        // Normalize hues consistently
-        let normalizedLowerHue = lowerHue.normalizedHue
-        let normalizedUpperHue = upperHue.normalizedHue
-
-        // Calculate interpolation factor with proper wrapping
-        let hueDiff = (normalizedUpperHue - normalizedLowerHue + 360).normalizedHue
-
-        // Calculate t with consistent precision
-        let rawT = (normalizedTargetHue - normalizedLowerHue + 360).normalizedHue / hueDiff
-        let t = rawT.rounded(to: ColorConstants.interpolationPrecision)
-
-        // Interpolate between corresponding stops
-        let result = interpolateStops(from: lowerRamp, to: upperRamp, t: t)
+        // Chromatic ramps are keyed by OKLCH hue and built uniformly (see UniformRamp).
+        let result = UniformRamp.ramp(hue: normalizedTargetHue)
 
         // Cache in static dictionary
         ColorRampGenerator.cacheLock.lock()
@@ -116,7 +81,7 @@ public class ColorRampGenerator {
     }
 
     /// Generates a color ramp in OKLCH space for a given hue value.
-    /// Uses the LCH palette data internally and converts each stop to OKLCH.
+    /// Converts each stop of `getColorRamp(forHue:)` to OKLCH.
     /// Results are cached to avoid repeated conversion.
     public func getOKLCHColorRamp(forHue targetHue: Double, steps: Int? = nil, isGrayscale: Bool = false) -> [OKLCHColor] {
         let steps = steps ?? ColorConstants.rampStops
@@ -137,28 +102,6 @@ public class ColorRampGenerator {
         ColorRampGenerator.cacheLock.unlock()
 
         return result
-    }
-
-    /// Finds the two color ramps that bound the target hue
-    /// - Parameters:
-    ///   - hue: Target hue value
-    ///   - ramps: Array of available color ramps
-    /// - Returns: Tuple of (lower, upper) ramps that bound the target hue
-    private func findBoundingRamps(forHue hue: Double, in ramps: [ColorRamp]) -> (ColorRamp, ColorRamp) {
-        // If only one ramp exists, use it for both bounds
-        guard ramps.count > 1 else {
-            return (ramps[0], ramps[0])
-        }
-
-        // Find the first ramp with hue greater than target
-        let upperIndex = ramps.firstIndex { ramp in
-            // Use the "0" stop (lightest) for consistent hue comparison
-            let rampHue = ramp.stops["0"]?.h ?? 0
-            return rampHue >= hue
-        } ?? 0
-
-        let lowerIndex = upperIndex == 0 ? ramps.count - 1 : upperIndex - 1
-        return (ramps[lowerIndex], ramps[upperIndex])
     }
 
     /// Interpolates between corresponding color stops of two ramps

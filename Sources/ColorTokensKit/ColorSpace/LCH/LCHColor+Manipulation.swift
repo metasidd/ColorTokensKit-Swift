@@ -27,7 +27,8 @@ public extension LCHColor {
     /// Gets a color at specified index in the ramp
     func getColor(at index: Int) -> LCHColor {
         let isGrayscale = c <= 0.1
-        let ramp = ColorRampGenerator.shared.getColorRamp(forHue: h, isGrayscale: isGrayscale)
+        // Ramps are keyed by OKLCH hue.
+        let ramp = ColorRampGenerator.shared.getColorRamp(forHue: Double(toRGB().toOKLCH().h), isGrayscale: isGrayscale)
         let clampedIndex = min(index, ramp.count - 1)
         return ramp[clampedIndex]
     }
