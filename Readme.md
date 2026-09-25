@@ -19,6 +19,9 @@ ColorTokensKit fixes this by building on perceptually uniform color spaces (OKLC
 - **Built-in accessibility** — WCAG 2.x and APCA contrast ratio utilities
 - **Automatic dark mode** — every token resolves to light and dark variants
 - **Theming in one line** — pass any `ProColor` and get a complete, accessible palette
+- **Color functions** — `lighten()`, `soften()`, `saturate()`, `rotateHue(by:)`, `blend(with:)` and `invert()` on any `Color`, correct in light and dark mode
+- **Harmonies** — `complement`, `triad`, `analogous()` and more, balanced by construction
+- **Smooth gradients** — `proGradient()` interpolates in OKLCH, the same as CSS, from colors you pick or from a single color
 - **OKLCH + CIELab LCH** — two perceptually uniform color spaces, plus RGB, XYZ, LAB, OKLab conversions
 - **Thread-safe and Sendable** — ready for Swift concurrency
 - **Zero dependencies** — pure Swift, SPM only
@@ -209,6 +212,94 @@ Every `ProColor` provides these semantic tokens, each resolving to light/dark mo
 | **Inverted Surface** | `invertedSurfacePrimary` (40%), `invertedSurfaceSecondary` (20%) |
 | **Outline** | `outlinePrimary`, `outlineSecondary`, `outlineTertiary` |
 
+## Color Functions
+
+Every function works on any SwiftUI `Color` (a token, a system color, a hex color) and returns a new `Color` that stays correct in light and dark mode.
+
+```swift
+theme.foregroundTertiary.lighten()                // one stop lighter, in light and dark mode
+theme.foregroundTertiary.soften()                 // closer to the background: quieter in both modes
+theme.foregroundTertiary.strengthen()             // further from the background: louder in both modes
+badge.saturate()                                  // 20% more vivid
+badge.desaturate(by: 1)                           // gray, at the same lightness (so the same contrast)
+accent.rotateHue(by: .degrees(30))
+accent.blend(with: Color.proPink._500.toColor())  // mixed in OKLab, so it doesn't go muddy
+Color.proBlue._200.toColor().invert()             // _850: same hue, mirrored stop
+```
+
+| Function | What it does |
+|----------|--------------|
+| `lighten(by:)`, `darken(by:)` | Moves up or down the palette by whole stops (default 1) |
+| `soften(by:)`, `strengthen(by:)` | Moves toward or away from the background: lighter or darker depending on the appearance |
+| `saturate(by:)`, `desaturate(by:)` | More or less vivid (default 20%); `desaturate(by: 1)` is gray |
+| `rotateHue(by:)` | Turns the hue round the color wheel, keeping lightness |
+| `blend(with:by:)` | Mixes with another color in OKLab (SwiftUI's `mix` needs iOS 18) |
+| `invert()` | The same hue at the mirrored stop, `_200` ↔ `_850` (SwiftUI's `colorInvert()` flips RGB instead) |
+
+Palette colors move along the palette: `Color.proBlue._600.toColor().lighten()` is exactly `_550`, so contrast stays predictable. Any other color moves by the same visual step.
+
+## Color Harmonies
+
+Related colors come back ready to use, in the same role as the original: the triad of a background is three backgrounds. Every member keeps the original's lightness, so a harmony is balanced by construction. Parameters have defaults, so you only pass them to change something.
+
+```swift
+brand.complement                         // the opposite hue
+brand.triad                              // brand and the two hues a third of the wheel away
+brand.square                             // four hues a quarter of the wheel apart
+brand.tetrad()                           // two complementary pairs, 60° apart
+brand.splitComplement()                  // brand and the hues either side of its complement
+brand.analogous()                        // 3 neighbors, 30° apart, brand in the middle
+brand.monochromatic()                    // 5 colors of the same hue, light to dark
+brand.tints()                            // 3 lighter, one stop apart
+brand.shades()                           // 3 darker, one stop apart
+
+brand.analogous(count: 5, spread: .degrees(15))
+brand.harmony(.splitComplement(spread: .degrees(20)))   // chosen at runtime
+```
+
+The same harmonies work on a whole `ProColor` family and return families, so you can take any token of the related hue. Both routes give the same color:
+
+```swift
+Color.proBlue.complement.backgroundSecondary   // the family route
+Color.proBlue.backgroundSecondary.complement   // the color route: the same color
+```
+
+## Smooth Gradients
+
+![Smooth Gradients](/Assets/smooth-gradients.png)
+
+SwiftUI blends gradient colors either in the device's RGB space (`.device`), which takes distant colors through gray, or in a perceptual space it doesn't specify (`.perceptual`). `proGradient()` adds in-between colors worked out in OKLCH, the space CSS uses for `linear-gradient(in oklch, …)`, so gradients look the same on every OS version and on the web, and you choose which way hues travel. It returns SwiftUI's own gradient types, so it works in backgrounds, fills, strokes and text.
+
+From colors you choose, any array of `Color` or `ProColor`, harmonies included:
+
+```swift
+.background([theme.surfaceTertiary, theme.surfaceSecondary].proGradient())   // top → bottom
+.background(brand.analogous().proGradient(from: .leading, to: .trailing))
+.background([glow, .clear].proRadialGradient())                               // fills its view
+Circle().stroke(brand.triad.proAngularGradient(), lineWidth: 8)              // no seam
+[red, orange].proGradient(hue: .longer)                                       // the long way round
+```
+
+From a single color, with a recipe:
+
+```swift
+accent.proGradient()               // .subtle: a touch lighter at the top
+tinge.proGradient(.fade)           // to transparent, keeping its color
+brand.proGradient(.tonal)          // two stops lighter to two stops darker
+brand.proGradient(.analogous)      // drifts to the neighboring hues
+card.proGradient(.wash)            // a soft, translucent tint
+Color.white.proGradient(.sheen, from: .topLeading, to: .bottomTrailing)
+border.proGradient(.edgeHighlight, from: .leading, to: .trailing)
+
+// Or your own
+extension ProGradient.Recipe {
+    static var deepen: Self { Self { [$0, $0.darken(by: 4)] } }
+}
+brand.proGradient(.deepen)
+```
+
+Gradients between tokens stay correct in light and dark mode, and a fade to `.clear` keeps its color instead of drifting toward black.
+
 ## Accessibility
 
 ### Contrast Ratios
@@ -279,16 +370,21 @@ let midLCH = c.lerp(d, t: 0.5)
 For the curious, here's how the types connect:
 
 ```
-ProColor (stable public API, backed by OKLCH)
+ProColor (a color family: ramps, stops, tokens, harmonies; backed by OKLCH)
   |-- OKLCHColor <-> OKLabColor <-> RGBColor <-> Color
   |-- LCHColor   <-> LABColor   <-> XYZColor <-> RGBColor
+
+Color (any SwiftUI color)
+  |-- Adjustments, Harmonies, Gradients: worked out per appearance when drawn
 ```
 
 - **ProColor** — the recommended type for design tokens. Wraps OKLCH internally, so we can evolve the internals without breaking your code.
 - **OKLCHColor / OKLabColor** — OKLCH polar and OKLab cartesian forms (Ottosson's reference).
 - **LCHColor / LABColor / XYZColor** — CIELab color spaces.
 - **RGBColor** — sRGB, bridges to/from SwiftUI `Color`.
-- **ColorRampGenerator** — generates 20-stop ramps from hand-tuned palette data.
+- **ColorRampGenerator** — builds and caches 20-stop ramps: `UniformRamp` for hues (one lightness and one chroma per stop, shared by every hue), the palette data for gray.
+- **Adjustments, Harmonies, Gradients** — the color functions. Each returns a `Color` that is worked out when drawn, for the current appearance (`Color+Adaptive`).
+- **Gamut, StopLadder, PaletteStop** — shared maths: fitting colors into sRGB, the lightness of each stop, and recognizing palette colors so they move stop by stop.
 
 ## Future Ideas
 
@@ -297,8 +393,6 @@ Got a feature request? [Open an issue](https://github.com/metasidd/ColorTokensKi
 - [ ] Delta E color difference API (CIE76 / CIEDE2000)
 - [ ] Non-linear lightness curves for ramp generation
 - [ ] Semantic token layer in main library (primitive -> semantic -> component)
-- [ ] `.lighten()`, `.darken()`, `.saturate()`, `.desaturate()` modifiers
-- [ ] Smooth gradients using perceptually uniform interpolation
 - [ ] Color blindness simulation (Brettel/Vienot)
 - [ ] HSL/HSV color space types
 - [ ] Display P3 gamut awareness
