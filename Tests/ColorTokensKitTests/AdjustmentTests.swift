@@ -14,7 +14,7 @@ final class AdjustmentTests: XCTestCase {
     // MARK: - Lightness
 
     // Palette colors must land on exact palette stops, or contrast stops being predictable.
-    func testLightenAndDarkenMoveAPaletteColourToExactStops() {
+    func testLightenAndDarkenMoveAPaletteColorToExactStops() {
         XCTAssertEqual(blue._600.toColor().lighten().hex(), blue._550.toColor().hex())
         XCTAssertEqual(blue._600.toColor().darken(by: 2).hex(), blue._700.toColor().hex())
     }
@@ -47,7 +47,7 @@ final class AdjustmentTests: XCTestCase {
     }
 
     // Colors from outside the palette get the same visual step and keep their hue.
-    func testAnOffPaletteColourMovesOneStepAndKeepsItsHue() {
+    func testAnOffPaletteColorMovesOneStepAndKeepsItsHue() {
         let brick = Color(red: 0.72, green: 0.28, blue: 0.2)
         let before = brick.resolvedOKLCH(for: .light)
         let after = brick.lighten().resolvedOKLCH(for: .light)
@@ -78,12 +78,12 @@ final class AdjustmentTests: XCTestCase {
 
     // MARK: - Hue
 
-    func testRotatingAFullTurnGivesTheSameColour() {
+    func testRotatingAFullTurnGivesTheSameColor() {
         XCTAssertEqual(blue._500.toColor().rotateHue(by: .degrees(360)).hex(), blue._500.toColor().hex())
     }
 
     // A rotated palette color is the same stop of another hue's ramp, so it keeps the stop's lightness.
-    func testRotatingAPaletteColourLandsOnTheSameStopOfTheNewHue() {
+    func testRotatingAPaletteColorLandsOnTheSameStopOfTheNewHue() {
         let rotated = blue._500.toColor().rotateHue(by: .degrees(120))
         let expected = ProColor.primary(forHue: 251 + 120)._500
         XCTAssertEqual(rotated.hex(), expected.toColor().hex())
@@ -91,7 +91,7 @@ final class AdjustmentTests: XCTestCase {
 
     // MARK: - Mixing and inversion
 
-    func testBlendEndsAreTheTwoColours() {
+    func testBlendEndsAreTheTwoColors() {
         let a = blue._500.toColor(), b = Color.proPink._500.toColor()
         XCTAssertEqual(a.blend(with: b, by: 0).hex(), a.hex())
         XCTAssertEqual(a.blend(with: b, by: 1).hex(), b.hex())

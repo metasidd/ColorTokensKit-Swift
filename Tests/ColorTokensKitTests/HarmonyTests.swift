@@ -17,13 +17,16 @@ final class HarmonyTests: XCTestCase {
         }
     }
 
-    // Every harmony starts from the original color, so the first member is exactly it.
+    // Every harmony starts from the original color, untouched: even one sRGB can't show, like Display P3 red.
     func testHarmoniesStartWithTheOriginalColor() {
         let source = blue._500.toColor()
         XCTAssertEqual(source.triad[0].hex(), source.hex())
         XCTAssertEqual(source.square[0].hex(), source.hex())
         XCTAssertEqual(source.tetrad()[0].hex(), source.hex())
         XCTAssertEqual(source.splitComplement()[0].hex(), source.hex())
+
+        let displayP3Red = Color(.displayP3, red: 1, green: 0, blue: 0)
+        XCTAssertEqual(displayP3Red.triad[0], displayP3Red)
     }
 
     func testComplementOfTheComplementIsTheOriginal() {
