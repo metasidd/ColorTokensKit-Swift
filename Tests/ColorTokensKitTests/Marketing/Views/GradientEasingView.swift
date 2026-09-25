@@ -1,7 +1,7 @@
 @testable import ColorTokensKit
 import SwiftUI
 
-/// README image: every easing, with its curve and the gradient it makes.
+/// README image: SwiftUI's own gradient, then every easing, with its curve and the gradient it makes.
 struct GradientEasingView: View {
     private struct Row {
         let name: String
@@ -21,7 +21,7 @@ struct GradientEasingView: View {
     private let colors = [Color.proViolet._700.toColor(), Color.proPink._200.toColor()]
 
     var body: some View {
-        VStack(spacing: 44) {
+        VStack(spacing: 40) {
             VStack(spacing: 12) {
                 Text("📈 Gradient easing")
                     .font(.system(size: 32, weight: .black))
@@ -31,23 +31,21 @@ struct GradientEasingView: View {
                     .foregroundStyle(Color.foregroundTertiary)
             }
 
-            VStack(spacing: 22) {
-                ForEach(rows, id: \.name) { row in
-                    HStack(spacing: 40) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(row.name)
-                                .font(.system(size: 22, weight: .bold))
-                                .foregroundStyle(Color.foregroundPrimary)
-                            Text(row.note)
-                                .font(.system(size: 18, weight: .regular))
-                                .foregroundStyle(Color.foregroundTertiary)
-                        }
-                        .frame(width: 500, alignment: .leading)
-                        curve(row.easing)
-                        RoundedRectangle(cornerRadius: 24)
-                            .fill(colors.proGradient(from: .leading, to: .trailing, easing: row.easing))
-                            .frame(height: 110)
-                    }
+            VStack(spacing: 16) {
+                row(
+                    "LinearGradient",
+                    note: "SwiftUI's own, for comparison",
+                    easing: .linear,
+                    fill: LinearGradient(colors: colors, startPoint: .leading, endPoint: .trailing)
+                )
+                Divider()
+                ForEach(rows, id: \.name) { item in
+                    row(
+                        item.name,
+                        note: item.note,
+                        easing: item.easing,
+                        fill: colors.proGradient(from: .leading, to: .trailing, easing: item.easing)
+                    )
                 }
             }
         }
@@ -55,6 +53,24 @@ struct GradientEasingView: View {
         .padding(MarketingStyle.pagePadding)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.white)
+    }
+
+    private func row(_ name: String, note: String, easing: ProGradient.Easing, fill: some ShapeStyle) -> some View {
+        HStack(spacing: 40) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(name)
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(Color.foregroundPrimary)
+                Text(note)
+                    .font(.system(size: 18, weight: .regular))
+                    .foregroundStyle(Color.foregroundTertiary)
+            }
+            .frame(width: 500, alignment: .leading)
+            curve(easing)
+            RoundedRectangle(cornerRadius: 24)
+                .fill(fill)
+                .frame(height: 96)
+        }
     }
 
     /// The easing's curve over a dashed line for `.linear`.
@@ -65,8 +81,8 @@ struct GradientEasingView: View {
             EasingCurve(easing: easing)
                 .stroke(Color.foregroundPrimary, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
         }
-        .padding(16)
-        .frame(width: 110, height: 110)
+        .padding(14)
+        .frame(width: 96, height: 96)
         .background(Color.proGray._100.toColor(), in: RoundedRectangle(cornerRadius: 20))
     }
 }
