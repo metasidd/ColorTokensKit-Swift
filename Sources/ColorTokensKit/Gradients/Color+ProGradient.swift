@@ -20,9 +20,11 @@ public extension Color {
     func proGradient(
         _ recipe: ProGradient.Recipe = .subtle,
         from start: UnitPoint = .top,
-        to end: UnitPoint = .bottom
+        to end: UnitPoint = .bottom,
+        blend: ProGradient.Blend = .vivid,
+        easing: ProGradient.Easing = .smooth
     ) -> LinearGradient {
-        recipe.colors(from: self).proGradient(from: start, to: end)
+        recipe.colors(from: self).proGradient(from: start, to: end, blend: blend, easing: easing)
     }
 
     /// A smooth gradient generated from this color, from the center outward.
@@ -32,9 +34,11 @@ public extension Color {
     /// ```
     func proRadialGradient(
         _ recipe: ProGradient.Recipe = .subtle,
-        center: UnitPoint = .center
+        center: UnitPoint = .center,
+        blend: ProGradient.Blend = .vivid,
+        easing: ProGradient.Easing = .smooth
     ) -> EllipticalGradient {
-        recipe.colors(from: self).proRadialGradient(center: center)
+        recipe.colors(from: self).proRadialGradient(center: center, blend: blend, easing: easing)
     }
 
     /// A smooth gradient generated from this color, around a center.
@@ -44,9 +48,11 @@ public extension Color {
     /// ```
     func proAngularGradient(
         _ recipe: ProGradient.Recipe = .subtle,
-        center: UnitPoint = .center
+        center: UnitPoint = .center,
+        blend: ProGradient.Blend = .vivid,
+        easing: ProGradient.Easing = .smooth
     ) -> AngularGradient {
-        recipe.colors(from: self).proAngularGradient(center: center)
+        recipe.colors(from: self).proAngularGradient(center: center, blend: blend, easing: easing)
     }
 }
 
@@ -59,24 +65,30 @@ public extension ProColor {
     func proGradient(
         _ recipe: ProGradient.Recipe = .subtle,
         from start: UnitPoint = .top,
-        to end: UnitPoint = .bottom
+        to end: UnitPoint = .bottom,
+        blend: ProGradient.Blend = .vivid,
+        easing: ProGradient.Easing = .smooth
     ) -> LinearGradient {
-        toColor().proGradient(recipe, from: start, to: end)
+        toColor().proGradient(recipe, from: start, to: end, blend: blend, easing: easing)
     }
 
     /// A smooth gradient generated from this family's color, from the center outward.
     func proRadialGradient(
         _ recipe: ProGradient.Recipe = .subtle,
-        center: UnitPoint = .center
+        center: UnitPoint = .center,
+        blend: ProGradient.Blend = .vivid,
+        easing: ProGradient.Easing = .smooth
     ) -> EllipticalGradient {
-        toColor().proRadialGradient(recipe, center: center)
+        toColor().proRadialGradient(recipe, center: center, blend: blend, easing: easing)
     }
 
     /// A smooth gradient generated from this family's color, around a center.
     func proAngularGradient(
         _ recipe: ProGradient.Recipe = .subtle,
-        center: UnitPoint = .center
+        center: UnitPoint = .center,
+        blend: ProGradient.Blend = .vivid,
+        easing: ProGradient.Easing = .smooth
     ) -> AngularGradient {
-        toColor().proAngularGradient(recipe, center: center)
+        toColor().proAngularGradient(recipe, center: center, blend: blend, easing: easing)
     }
 }

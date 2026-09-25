@@ -6,13 +6,14 @@
 //  line through OKLab, so distant colors meet in a paler middle; `.device` blends
 //  in RGB, through gray. ColorTokensKit adds in-between colors worked out in
 //  OKLCH, the space CSS uses for `linear-gradient(in oklch, …)`, so colors stay
-//  vivid, a gradient looks the same on every OS version and on the web, and you
-//  choose which way hues travel. It then hands back SwiftUI's own gradient types,
-//  so a smooth gradient works anywhere a gradient already does.
+//  vivid and a gradient looks the same on every OS version and on the web. It
+//  eases gently from first color to last by default, then hands back SwiftUI's
+//  own gradient types, so it works anywhere a gradient already does.
 //
-//      [top, bottom].proGradient()             // colors you choose
-//      brand.proGradient(.fade)                // generated from one color
-//      brand.triad.proAngularGradient()        // a harmony, as a ring
+//      [top, bottom].proGradient()                  // colors you choose
+//      [blue, yellow].proGradient(blend: .direct)   // a straight line, no hues in between
+//      brand.proGradient(.fade)                     // generated from one color
+//      brand.triad.proAngularGradient()             // a harmony, as a ring
 //
 //  The functions live in Array+ProGradient (colors you choose) and
 //  Color+ProGradient (one color and a recipe). This file holds their options.
@@ -20,33 +21,65 @@
 
 import SwiftUI
 
-/// Options for the `proGradient`, `proRadialGradient` and `proAngularGradient` functions.
+/// Options for the `proGradient`, `proRadialGradient` and `proAngularGradient` functions:
+/// how they blend between colors, how they ease from first to last, and recipes for one color.
 public enum ProGradient {
-    /// Which way hues travel round the color wheel between two colors, using CSS Color 4's names.
-    public enum HuePath: Hashable, Sendable {
-        /// The short way round. The default.
-        case shorter
-        /// The long way round, for rainbow sweeps.
-        case longer
-        /// Always toward higher hue angles.
-        case increasing
-        /// Always toward lower hue angles.
-        case decreasing
+    /// How a gradient travels from one color to the next.
+    public enum Blend: Hashable, Sendable {
+        /// Round the color wheel the short way, so colors stay saturated: blue to yellow passes
+        /// teal and green. The default.
+        case vivid
+        /// A straight line, with no hues in between; distant colors meet in a paler middle.
+        /// This is SwiftUI's own look.
+        case direct
+        /// Round the color wheel the long way, through the hues on the other side.
+        case rainbow
+    }
 
-        /// The hue `t` of the way from `start` to `end` along this path.
-        func hue(from start: Double, to end: Double, at t: Double) -> Double {
-            var delta = end - start
-            switch self {
-            case .shorter:
-                if delta > 180 { delta -= 360 } else if delta < -180 { delta += 360 }
-            case .longer:
-                if delta > 0, delta < 180 { delta -= 360 } else if delta > -180, delta <= 0 { delta += 360 }
-            case .increasing:
-                if delta < 0 { delta += 360 }
-            case .decreasing:
-                if delta > 0 { delta -= 360 }
+    /// How quickly a gradient changes from its first color to its last, with the same names as
+    /// SwiftUI's `Animation`. The default, `.smooth`, starts and finishes gently, so the gradient
+    /// has no hard edges where it meets the colors around it.
+    public struct Easing: Hashable, Sendable {
+        private let x1, y1, x2, y2: Double
+
+        /// A constant rate of change, like SwiftUI's own gradients.
+        public static let linear = Easing(0, 0, 1, 1)
+        /// Starts slowly and speeds up.
+        public static let easeIn = Easing(0.42, 0, 1, 1)
+        /// Starts quickly and slows down.
+        public static let easeOut = Easing(0, 0, 0.58, 1)
+        /// Slow at both ends, quick in the middle.
+        public static let easeInOut = Easing(0.42, 0, 0.58, 1)
+        /// Gentle at both ends and softer than `.easeInOut`. The default.
+        public static let smooth = Easing(0.37, 0, 0.63, 1)
+
+        /// A custom cubic Bézier curve, as in SwiftUI's `Animation.timingCurve(_:_:_:_:)`.
+        /// Values are held to 0…1, since a gradient can't overshoot its colors.
+        public static func timingCurve(_ x1: Double, _ y1: Double, _ x2: Double, _ y2: Double) -> Easing {
+            Easing(x1, y1, x2, y2)
+        }
+
+        private init(_ x1: Double, _ y1: Double, _ x2: Double, _ y2: Double) {
+            (self.x1, self.y1, self.x2, self.y2) = (min(max(x1, 0), 1), min(max(y1, 0), 1), min(max(x2, 0), 1), min(max(y2, 0), 1))
+        }
+
+        /// Where along the gradient (0…1) the colors are `progress` (0…1) of the way from the first to the last.
+        func location(forProgress progress: Double) -> Double {
+            if progress <= 0 { return 0 }
+            if progress >= 1 { return 1 }
+            guard self != .linear else { return progress }
+            var low = 0.0, high = 1.0
+            for _ in 0 ..< 40 {
+                let t = (low + high) / 2
+                if bezier(t, y1, y2) < progress { low = t } else { high = t }
             }
-            return (start + delta * t).normalizedHue
+            return bezier((low + high) / 2, x1, x2)
+        }
+
+        /// One coordinate of the cubic Bézier from (0, 0) to (1, 1) at parameter `t`.
+        private func bezier(_ t: Double, _ first: Double, _ second: Double) -> Double {
+            let u = 1 - t
+            return 3 * u * u * t * first + 3 * u * t * t * second + t * t * t
         }
     }
 

@@ -11,17 +11,21 @@ import SwiftUI
 
 public extension Array where Element == Color {
     /// A smooth linear gradient through these colors, top to bottom unless you say otherwise.
+    /// It blends `.vivid`ly and eases `.smooth`ly unless you ask for something else.
     ///
     /// ```swift
     /// .background([theme.surfaceTertiary, theme.surfaceSecondary].proGradient())
     /// .background(brand.analogous().proGradient(from: .leading, to: .trailing))
+    /// .background([blue, yellow].proGradient(blend: .direct))     // no hues in between
+    /// .background([glow, .clear].proGradient(easing: .easeOut))
     /// ```
     func proGradient(
         from start: UnitPoint = .top,
         to end: UnitPoint = .bottom,
-        hue: ProGradient.HuePath = .shorter
+        blend: ProGradient.Blend = .vivid,
+        easing: ProGradient.Easing = .smooth
     ) -> LinearGradient {
-        LinearGradient(stops: GradientStops.smooth(self, hue: hue), startPoint: start, endPoint: end)
+        LinearGradient(stops: GradientStops.smooth(self, blend: blend, easing: easing), startPoint: start, endPoint: end)
     }
 
     /// A smooth gradient from the center outward, filling its view.
@@ -31,9 +35,10 @@ public extension Array where Element == Color {
     /// ```
     func proRadialGradient(
         center: UnitPoint = .center,
-        hue: ProGradient.HuePath = .shorter
+        blend: ProGradient.Blend = .vivid,
+        easing: ProGradient.Easing = .smooth
     ) -> EllipticalGradient {
-        EllipticalGradient(stops: GradientStops.smooth(self, hue: hue), center: center)
+        EllipticalGradient(stops: GradientStops.smooth(self, blend: blend, easing: easing), center: center)
     }
 
     /// A smooth gradient around a center that returns to its first color, so there's no seam.
@@ -43,9 +48,10 @@ public extension Array where Element == Color {
     /// ```
     func proAngularGradient(
         center: UnitPoint = .center,
-        hue: ProGradient.HuePath = .shorter
+        blend: ProGradient.Blend = .vivid,
+        easing: ProGradient.Easing = .smooth
     ) -> AngularGradient {
-        AngularGradient(stops: GradientStops.smooth(self, hue: hue, closingLoop: true), center: center)
+        AngularGradient(stops: GradientStops.smooth(self, blend: blend, easing: easing, closingLoop: true), center: center)
     }
 }
 
@@ -58,24 +64,27 @@ public extension Array where Element == ProColor {
     func proGradient(
         from start: UnitPoint = .top,
         to end: UnitPoint = .bottom,
-        hue: ProGradient.HuePath = .shorter
+        blend: ProGradient.Blend = .vivid,
+        easing: ProGradient.Easing = .smooth
     ) -> LinearGradient {
-        map { $0.toColor() }.proGradient(from: start, to: end, hue: hue)
+        map { $0.toColor() }.proGradient(from: start, to: end, blend: blend, easing: easing)
     }
 
     /// A smooth gradient through these families' colors, from the center outward.
     func proRadialGradient(
         center: UnitPoint = .center,
-        hue: ProGradient.HuePath = .shorter
+        blend: ProGradient.Blend = .vivid,
+        easing: ProGradient.Easing = .smooth
     ) -> EllipticalGradient {
-        map { $0.toColor() }.proRadialGradient(center: center, hue: hue)
+        map { $0.toColor() }.proRadialGradient(center: center, blend: blend, easing: easing)
     }
 
     /// A smooth gradient through these families' colors, around a center.
     func proAngularGradient(
         center: UnitPoint = .center,
-        hue: ProGradient.HuePath = .shorter
+        blend: ProGradient.Blend = .vivid,
+        easing: ProGradient.Easing = .smooth
     ) -> AngularGradient {
-        map { $0.toColor() }.proAngularGradient(center: center, hue: hue)
+        map { $0.toColor() }.proAngularGradient(center: center, blend: blend, easing: easing)
     }
 }
