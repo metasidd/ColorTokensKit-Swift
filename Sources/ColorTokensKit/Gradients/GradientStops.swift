@@ -11,11 +11,27 @@
 import SwiftUI
 
 enum GradientStops {
-    /// In-between colors per pair of colors: enough that SwiftUI's own blending between
-    /// neighbors is invisible, few enough to stay cheap to draw.
-    static let stepsPerSegment = 8
+    /// Steps per unit of OKLab distance between two colors. Pure blue and pure yellow (0.73 apart)
+    /// get about 30; a fade within one hue gets a handful. Measured to keep SwiftUI's own blending
+    /// between neighbors under about 3 ΔE2000 for the most saturated pairs, and under 1 for UI colors.
+    static let stepsPerUnitDistance = 40.0
 
-    /// Evenly spaced stops through `colors`, with smooth colors between each pair.
+    /// Fewest and most steps for one pair of colors.
+    static let stepRange = 2 ... 32
+
+    /// How many steps a pair of colors needs, from how far apart they are in either appearance.
+    static func steps(from start: Color, to end: Color) -> Int {
+        let distance = [Appearance.light, .dark].map { appearance in
+            let (a, b) = ColorAdjustment.sharingColorAcrossTransparency(
+                start.resolvedOKLCH(for: appearance), end.resolvedOKLCH(for: appearance)
+            )
+            return Gamut.differenceOK(a, b)
+        }.max() ?? 0
+        let steps = Int((distance * stepsPerUnitDistance).rounded(.up))
+        return min(max(steps, stepRange.lowerBound), stepRange.upperBound)
+    }
+
+    /// Stops through `colors`, each color evenly spaced, with smooth colors between each pair.
     /// `closingLoop` returns to the first color at the end, which angular gradients need to avoid a seam.
     static func smooth(_ colors: [Color], hue: ProGradient.HuePath, closingLoop: Bool = false) -> [Gradient.Stop] {
         var colors = colors
@@ -31,8 +47,9 @@ enum GradientStops {
         var stops: [Gradient.Stop] = []
         for (index, (start, end)) in zip(colors, colors.dropFirst()).enumerated() {
             stops.append(Gradient.Stop(color: start, location: Double(index) / segments))
-            for step in 1 ..< stepsPerSegment {
-                let t = Double(step) / Double(stepsPerSegment)
+            let steps = steps(from: start, to: end)
+            for step in 1 ..< steps {
+                let t = Double(step) / Double(steps)
                 let color = Color.adapting(combining: [start, end]) { resolved, _ in
                     interpolate(resolved[0], resolved[1], at: t, hue: hue)
                 }

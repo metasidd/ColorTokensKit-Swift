@@ -5,29 +5,76 @@ import XCTest
 final class GradientTests: XCTestCase {
     private let blue = Color(red: 0, green: 0, blue: 1)
     private let yellow = Color(red: 1, green: 1, blue: 0)
-    private let middle = GradientStops.stepsPerSegment / 2
 
     /// The resolved colors of a gradient's stops, in order.
     private func resolved(_ stops: [Gradient.Stop], _ appearance: Appearance = .light) -> [OKLCHColor] {
         stops.map { $0.color.resolvedOKLCH(for: appearance) }
     }
 
+    /// The stop nearest a location, e.g. the middle of a two-color gradient.
+    private func stop(nearest location: Double, in stops: [Gradient.Stop]) -> Gradient.Stop {
+        stops.min { abs($0.location - location) < abs($1.location - location) }!
+    }
+
+    /// Distance between two colors in OKLab: about 0.01 is just noticeable side by side.
+    private func distance(_ a: OKLCHColor, _ b: OKLCHColor) -> Double {
+        let x = a.toOKLab(), y = b.toOKLab()
+        return Double(sqrt(pow(x.l - y.l, 2) + pow(x.a - y.a, 2) + pow(x.b - y.b, 2)))
+    }
+
+    // MARK: - The path
+
     // Blending blue → yellow in RGB (SwiftUI's `.device` space) passes through gray; OKLCH keeps its color.
     func testTheMiddleOfBlueToYellowIsNotGray() {
-        let middleColor = resolved(GradientStops.smooth([blue, yellow], hue: .shorter))[middle]
-        XCTAssertGreaterThan(middleColor.c, 0.08)
+        let middle = GradientStops.interpolate(blue.resolvedOKLCH(for: .light), yellow.resolvedOKLCH(for: .light), at: 0.5, hue: .shorter)
+        XCTAssertGreaterThan(middle.c, 0.08)
+        let shown = stop(nearest: 0.5, in: GradientStops.smooth([blue, yellow], hue: .shorter))
+        XCTAssertGreaterThan(shown.color.resolvedOKLCH(for: .light).c, 0.08)
+    }
+
+    func testTheLongerHuePathGoesTheOtherWayRound() {
+        let red = Color.proRed._500.toColor().resolvedOKLCH(for: .light) // hue 24°
+        let gold = Color.proGold._500.toColor().resolvedOKLCH(for: .light) // hue 78°
+        XCTAssertEqual(Double(GradientStops.interpolate(red, gold, at: 0.5, hue: .shorter).h), 51, accuracy: 2)
+        XCTAssertEqual(Double(GradientStops.interpolate(red, gold, at: 0.5, hue: .longer).h), 231, accuracy: 2)
+    }
+
+    // MARK: - Steps
+
+    // Far-apart colors need more steps to follow their path; close ones need few, which keeps drawing cheap.
+    func testDistantColorsGetMoreStepsThanCloseOnes() {
+        let family = Color.proBlue
+        XCTAssertGreaterThanOrEqual(GradientStops.steps(from: blue, to: yellow), 24)
+        XCTAssertLessThanOrEqual(GradientStops.steps(from: family._100.toColor(), to: family._300.toColor()), 8)
+        XCTAssertEqual(GradientStops.steps(from: blue, to: blue), GradientStops.stepRange.lowerBound)
+    }
+
+    // Between two steps SwiftUI blends in its own way. The steps must be close enough that this never shows,
+    // even for the most saturated pair: halfway between neighbors, an RGB blend stays within 0.03 of the true path.
+    func testStepsAreCloseEnoughThatSwiftUIsOwnBlendingDoesNotShow() {
+        let start = blue.resolvedOKLCH(for: .light), end = yellow.resolvedOKLCH(for: .light)
+        let stops = GradientStops.smooth([blue, yellow], hue: .shorter)
+        for (a, b) in zip(stops, stops.dropFirst()) {
+            let x = a.color.resolvedOKLCH(for: .light).toRGB(), y = b.color.resolvedOKLCH(for: .light).toRGB()
+            let rgbBlend = RGBColor(r: (x.r + y.r) / 2, g: (x.g + y.g) / 2, b: (x.b + y.b) / 2, alpha: 1).toOKLCH()
+            let truth = GradientStops.interpolate(start, end, at: (a.location + b.location) / 2, hue: .shorter)
+            XCTAssertLessThan(distance(rgbBlend, truth), 0.03, "between \(a.location) and \(b.location)")
+        }
     }
 
     func testStopsRunEvenlyFromTheFirstColorToTheLast() {
         let pink = Color.proPink._500.toColor()
         let stops = GradientStops.smooth([blue, yellow, pink], hue: .shorter)
-        XCTAssertEqual(stops.count, 2 * GradientStops.stepsPerSegment + 1)
+        XCTAssertEqual(stops.count, GradientStops.steps(from: blue, to: yellow) + GradientStops.steps(from: yellow, to: pink) + 1)
         XCTAssertEqual(stops.first?.location, 0)
         XCTAssertEqual(stops.last?.location, 1)
         XCTAssertEqual(stops.map(\.location), stops.map(\.location).sorted())
+        XCTAssertEqual(stop(nearest: 0.5, in: stops).color.hex(), yellow.hex())
         XCTAssertEqual(stops.first?.color.hex(), blue.hex())
         XCTAssertEqual(stops.last?.color.hex(), pink.hex())
     }
+
+    // MARK: - Transparency, loops and appearances
 
     // Fading to .clear should only fade. The color keeps its hue, lightness and chroma instead of drifting toward black.
     func testFadingToClearKeepsTheColor() {
@@ -50,22 +97,14 @@ final class GradientTests: XCTestCase {
         XCTAssertEqual(stops.first?.color.hex(), stops.last?.color.hex())
     }
 
-    func testTheLongerHuePathGoesTheOtherWayRound() {
-        let red = Color.proRed._500.toColor(), gold = Color.proGold._500.toColor() // hues 24° and 78°
-        let shorter = resolved(GradientStops.smooth([red, gold], hue: .shorter))[middle]
-        let longer = resolved(GradientStops.smooth([red, gold], hue: .longer))[middle]
-        XCTAssertEqual(Double(shorter.h), 51, accuracy: 2)
-        XCTAssertEqual(Double(longer.h), 231, accuracy: 2)
-    }
-
     // A gradient between tokens stays adaptive, so it's right in both appearances.
     func testGradientsBetweenTokensWorkInBothAppearances() {
         let family = Color.proBlue
         let top = Color(light: family._100.toColor(), dark: family._800.toColor())
         let bottom = Color(light: family._300.toColor(), dark: family._600.toColor())
-        let middleColor = GradientStops.smooth([top, bottom], hue: .shorter)[middle].color
-        XCTAssertGreaterThan(middleColor.resolvedOKLCH(for: .light).lightnessStar, 70)
-        XCTAssertLessThan(middleColor.resolvedOKLCH(for: .dark).lightnessStar, 50)
+        let middle = stop(nearest: 0.5, in: GradientStops.smooth([top, bottom], hue: .shorter)).color
+        XCTAssertGreaterThan(middle.resolvedOKLCH(for: .light).lightnessStar, 70)
+        XCTAssertLessThan(middle.resolvedOKLCH(for: .dark).lightnessStar, 50)
     }
 
     // MARK: - Recipes

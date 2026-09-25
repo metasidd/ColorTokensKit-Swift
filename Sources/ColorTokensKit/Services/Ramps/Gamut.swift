@@ -86,17 +86,44 @@ enum Gamut {
         return OKLCHColor(l: lightness, c: chroma, h: hue, alpha: alpha)
     }
 
-    /// This color with its chroma reduced, at the same OKLab lightness and hue, until sRGB can show it.
+    /// This color brought inside sRGB the way CSS Color 4 maps gradients and mixes: reduce chroma at the
+    /// same OKLab lightness and hue, but stop as soon as simply clipping would be within a just-noticeable
+    /// difference. Colors at the edge of the gamut stay vivid, and a gradient's path has no sudden kinks.
     static func fitted(_ color: OKLCHColor) -> OKLCHColor {
-        let lightness = min(max(Double(color.l), 0), 1)
-        let hue = Double(color.h)
-        guard !contains(lightness: lightness, chroma: Double(color.c), hue: hue) else { return color }
-        var low = 0.0, high = Double(color.c)
-        for _ in 0 ..< 30 {
-            let middle = (low + high) / 2
-            if contains(lightness: lightness, chroma: middle, hue: hue) { low = middle } else { high = middle }
+        let lightness = Double(color.l), hue = Double(color.h)
+        if lightness >= 1 { return OKLCHColor(l: 1, c: 0, h: hue, alpha: color.alpha) }
+        if lightness <= 0 { return OKLCHColor(l: 0, c: 0, h: hue, alpha: color.alpha) }
+        if contains(lightness: lightness, chroma: Double(color.c), hue: hue) { return color }
+
+        let justNoticeable = 0.02, epsilon = 0.0001
+        var current = color
+        var clipped = current.toRGB().toOKLCH()
+        if differenceOK(clipped, current) < justNoticeable { return clipped }
+        var low = 0.0, high = Double(color.c), lowIsInGamut = true
+        while high - low > epsilon {
+            let chroma = (low + high) / 2
+            current = OKLCHColor(l: lightness, c: chroma, h: hue, alpha: color.alpha)
+            if lowIsInGamut, contains(lightness: lightness, chroma: chroma, hue: hue) {
+                low = chroma
+                continue
+            }
+            clipped = current.toRGB().toOKLCH()
+            let difference = differenceOK(clipped, current)
+            if difference < justNoticeable {
+                if justNoticeable - difference < epsilon { return clipped }
+                lowIsInGamut = false
+                low = chroma
+            } else {
+                high = chroma
+            }
         }
-        return OKLCHColor(l: lightness, c: low, h: hue, alpha: color.alpha)
+        return clipped
+    }
+
+    /// Distance between two colors in OKLab (ΔEOK); about 0.02 is just noticeable.
+    static func differenceOK(_ a: OKLCHColor, _ b: OKLCHColor) -> Double {
+        let x = a.toOKLab(), y = b.toOKLab()
+        return Double(sqrt(pow(x.l - y.l, 2) + pow(x.a - y.a, 2) + pow(x.b - y.b, 2)))
     }
 }
 
