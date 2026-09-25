@@ -78,7 +78,7 @@ In ColorTokensKit, each token maps a semantic role (like "primary background" or
 
 ## How It Works
 
-ColorTokensKit generates 20-stop color ramps for any hue using hand-tuned palette data interpolated in perceptually uniform color spaces. Each stop is a precise lightness level from near-white (`_50`) to near-black (`_1000`).
+ColorTokensKit generates a 20-stop ramp for any OKLCH hue, from near-white (`_50`) to near-black (`_1000`). Every hue shares the same lightness and chroma at each stop. Lightness is CIELab L\*, so a given stop has the same contrast (WCAG) whatever the hue; chroma is the most that nearly every hue can show in sRGB, and a hue that can't reach it gets as close as it can.
 
 The `ProColor` type wraps these ramps with semantic accessors — `.foregroundPrimary`, `.backgroundSecondary`, `.outlineTertiary` — that automatically resolve to the right stop for light and dark mode.
 
@@ -123,7 +123,7 @@ import ColorTokensKit
 
 extension Color {
     static var brandColor: ProColor {
-        .primary(forHue: 210) // Any hue 0-360, or use a preset like Color.proBlue
+        .primary(forHue: 210) // Any OKLCH hue 0-360, or use a preset like Color.proBlue
     }
 }
 ```
@@ -145,17 +145,18 @@ VStack {
 
 And voila — dark mode works out of the box. No extra code.
 
-## 23 Built-in Pro Colors
+## 26 Built-in Pro Colors
 
-We ship 23 hand-tuned hues so you can get started without choosing anything:
+We ship gray and 25 hues so you can get started without choosing anything. Each hue sits where its name points: the median of nine color-naming sources (Radix, Tailwind, Material, Open Color, Ant Design, IBM Carbon, Apple's system colors, CSS named colors and the XKCD color survey), kept at least 10° from its neighbours.
 
 ```swift
-Color.proGray    Color.proPink    Color.proRed      Color.proTomato
-Color.proOrange  Color.proBrown   Color.proGold     Color.proYellow
-Color.proLime    Color.proOlive   Color.proGrass    Color.proGreen
-Color.proMint    Color.proCyan    Color.proTeal     Color.proBlue
-Color.proSky     Color.proCobalt  Color.proIndigo   Color.proIris
-Color.proPurple  Color.proViolet  Color.proPlum     Color.proRuby
+Color.proGray     Color.proPink     Color.proRuby     Color.proRed
+Color.proTomato   Color.proOrange   Color.proBrown    Color.proGold
+Color.proYellow   Color.proOlive    Color.proLime     Color.proGrass
+Color.proGreen    Color.proJade     Color.proMint     Color.proTeal
+Color.proCyan     Color.proSky      Color.proBlue     Color.proCobalt
+Color.proIndigo   Color.proIris     Color.proViolet   Color.proPurple
+Color.proPlum     Color.proMagenta
 ```
 
 Each one is a `ProColor` with 20 stops (`_50` through `_1000`) and the full set of semantic tokens for foreground, background, surface, outline, and their inverted variants.

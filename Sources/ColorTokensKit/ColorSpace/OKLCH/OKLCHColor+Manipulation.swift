@@ -25,8 +25,8 @@ public extension OKLCHColor {
     /// Gets a color at specified index in the ramp
     func getColor(at index: Int) -> OKLCHColor {
         let isGrayscale = c <= 0.005
-        // The palette is keyed by CIELab hue, not OKLCH hue.
-        let ramp = ColorRampGenerator.shared.getOKLCHColorRamp(forHue: Double(toLCH().h), isGrayscale: isGrayscale)
+        // Ramps are keyed by OKLCH hue.
+        let ramp = ColorRampGenerator.shared.getOKLCHColorRamp(forHue: Double(h), isGrayscale: isGrayscale)
         let clampedIndex = min(index, ramp.count - 1)
         return ramp[clampedIndex]
     }

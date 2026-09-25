@@ -147,13 +147,12 @@ final class ColorRampTests: XCTestCase {
 
     // Before the fix proCobalt's stops came from the ramp at CIELab ~235, i.e. sky.
     func testProColorStopsComeFromTheRampAtTheNamedHue() {
-        let ramp = ColorRampGenerator().getOKLCHColorRamp(forHue: 250)
+        let ramp = ColorRampGenerator().getOKLCHColorRamp(forHue: 261)
         XCTAssertEqual(Color.proCobalt.allStops.map(\.oklch), ramp)
     }
 
-    // OKLCH hue and CIELab hue sit ~17° apart for this indigo; looking the ramp up by
-    // the OKLCH hue lands on a bluer ramp.
-    func testOKLCHStopsLookUpTheRampByCIELabHue() {
+    // Ramps are keyed by OKLCH hue, so an OKLCH color's stops come from its own hue.
+    func testOKLCHStopsLookUpTheRampByTheirOwnHue() {
         let indigo = ColorRampGenerator().getOKLCHColorRamp(forHue: 270)[8]
         XCTAssertEqual(indigo._450.h, indigo.h, accuracy: 1)
     }
