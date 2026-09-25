@@ -28,52 +28,10 @@ enum UniformRamp {
 
     static func ramp(hue: Double) -> [LCHColor] {
         zip(lightness, chroma).map { lightnessStar, targetChroma in
-            let luminance = luminanceOf(lightnessStar: lightnessStar)
-            let chroma = min(targetChroma, gamutMargin * maxChroma(luminance: luminance, hue: hue))
-            let oklabLightness = lightnessFor(luminance: luminance, chroma: chroma, hue: hue)
+            let luminance = Gamut.luminance(lightnessStar: lightnessStar)
+            let chroma = min(targetChroma, gamutMargin * Gamut.maxChroma(luminance: luminance, hue: hue))
+            let oklabLightness = Gamut.lightness(forLuminance: luminance, chroma: chroma, hue: hue)
             return OKLCHColor(l: oklabLightness, c: chroma, h: hue).toRGB().toLCH()
         }
-    }
-
-    private static func luminanceOf(lightnessStar: Double) -> Double {
-        lightnessStar > 8 ? pow((lightnessStar + 16) / 116, 3) : lightnessStar / 903.3
-    }
-
-    private static func linearSRGB(lightness: Double, chroma: Double, hue: Double) -> (Double, Double, Double) {
-        let radians = hue * .pi / 180
-        let a = cos(radians) * chroma, b = sin(radians) * chroma
-        let lp = lightness + 0.3963377774 * a + 0.2158037573 * b
-        let mp = lightness - 0.1055613458 * a - 0.0638541728 * b
-        let sp = lightness - 0.0894841775 * a - 1.2914855480 * b
-        let lc = lp * lp * lp, mc = mp * mp * mp, sc = sp * sp * sp
-        return (4.0767416621 * lc - 3.3077115913 * mc + 0.2309699292 * sc,
-                -1.2684380046 * lc + 2.6097574011 * mc - 0.3413193965 * sc,
-                -0.0041960863 * lc - 0.7034186147 * mc + 1.7076147010 * sc)
-    }
-
-    private static func luminanceOf(lightness: Double, chroma: Double, hue: Double) -> Double {
-        let (r, g, b) = linearSRGB(lightness: lightness, chroma: chroma, hue: hue)
-        return 0.2126390059 * r + 0.7151686788 * g + 0.0721923054 * b
-    }
-
-    /// OKLab L that gives this luminance at this chroma and hue.
-    private static func lightnessFor(luminance: Double, chroma: Double, hue: Double) -> Double {
-        var low = 0.0, high = 1.0
-        for _ in 0 ..< 40 {
-            let middle = (low + high) / 2
-            if luminanceOf(lightness: middle, chroma: chroma, hue: hue) < luminance { low = middle } else { high = middle }
-        }
-        return (low + high) / 2
-    }
-
-    /// Most OKLCH chroma sRGB can show at this luminance and hue.
-    private static func maxChroma(luminance: Double, hue: Double) -> Double {
-        var low = 0.0, high = 0.5
-        for _ in 0 ..< 30 {
-            let middle = (low + high) / 2
-            let (r, g, b) = linearSRGB(lightness: lightnessFor(luminance: luminance, chroma: middle, hue: hue), chroma: middle, hue: hue)
-            if [r, g, b].allSatisfy({ $0 >= -1e-6 && $0 <= 1 + 1e-6 }) { low = middle } else { high = middle }
-        }
-        return low
     }
 }
