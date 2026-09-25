@@ -6,6 +6,15 @@ final class GradientTests: XCTestCase {
     private let blue = Color(red: 0, green: 0, blue: 1)
     private let yellow = Color(red: 1, green: 1, blue: 0)
 
+    /// The opacity SwiftUI draws at `location`: a straight blend between the stops either side.
+    private func opacity(at location: Double, in stops: [Gradient.Stop]) -> Double {
+        let after = stops.firstIndex { $0.location >= location } ?? stops.count - 1
+        let before = stops[max(after - 1, 0)], next = stops[after]
+        let start = Double(before.color.resolvedOKLCH(for: .light).alpha), end = Double(next.color.resolvedOKLCH(for: .light).alpha)
+        guard next.location > before.location else { return end }
+        return start + (end - start) * (location - before.location) / (next.location - before.location)
+    }
+
     /// The stop nearest a location, e.g. the middle of a two-color gradient.
     private func stop(nearest location: Double, in stops: [Gradient.Stop]) -> Gradient.Stop {
         stops.min { abs($0.location - location) < abs($1.location - location) }!
@@ -86,21 +95,36 @@ final class GradientTests: XCTestCase {
     // Far-apart colors need more steps to follow their path; close ones need few, which keeps drawing cheap.
     func testDistantColorsGetMoreStepsThanCloseOnes() {
         let family = Color.proBlue
-        XCTAssertGreaterThanOrEqual(GradientStops.steps(from: blue, to: yellow), 24)
-        XCTAssertLessThanOrEqual(GradientStops.steps(from: family._100.toColor(), to: family._300.toColor()), 8)
-        XCTAssertEqual(GradientStops.steps(from: blue, to: blue), GradientStops.stepRange.lowerBound)
+        XCTAssertGreaterThanOrEqual(GradientStops.steps(from: blue, to: yellow, blend: .vivid), 24)
+        XCTAssertLessThanOrEqual(GradientStops.steps(from: family._100.toColor(), to: family._300.toColor(), blend: .vivid), 8)
+        XCTAssertEqual(GradientStops.steps(from: blue, to: blue, blend: .vivid), GradientStops.stepRange.lowerBound)
     }
 
-    // Between two steps SwiftUI blends in its own way. The steps must be close enough that this never shows,
-    // even for the most saturated pair: halfway between neighbors, an RGB blend stays within 0.03 of the true path.
+    // `.rainbow` between neighboring hues is close as the crow flies but travels most of the way around the wheel.
+    // Counted by the straight line between its ends it got 3 steps, and SwiftUI's blending cut across the wheel.
+    func testStepsFollowTheLengthOfThePathNotTheDistanceBetweenTheEnds() {
+        let red = Color.proRed._450.toColor(), orange = Color.proOrange._450.toColor()
+        XCTAssertLessThanOrEqual(GradientStops.steps(from: red, to: orange, blend: .vivid), 4)
+        XCTAssertGreaterThanOrEqual(GradientStops.steps(from: red, to: orange, blend: .rainbow), 24)
+    }
+
+    // Between two steps SwiftUI blends in its own way. The steps must be close enough that this doesn't show, even
+    // for the most saturated pair and for the long way around: halfway between neighbors, an RGB blend stays within
+    // about a just-noticeable difference (0.02) of the true path. Pure blue's corner of sRGB comes closest, at 0.022.
     func testStepsAreCloseEnoughThatSwiftUIsOwnBlendingDoesNotShow() {
-        let start = blue.resolvedOKLCH(for: .light), end = yellow.resolvedOKLCH(for: .light)
-        let stops = GradientStops.smooth([blue, yellow], blend: .vivid, easing: .linear)
-        for (a, b) in zip(stops, stops.dropFirst()) {
-            let x = a.color.resolvedOKLCH(for: .light).toRGB(), y = b.color.resolvedOKLCH(for: .light).toRGB()
-            let rgbBlend = x.lerp(y, t: 0.5).toOKLCH()
-            let truth = GradientStops.interpolate(start, end, at: (a.location + b.location) / 2, blend: .vivid)
-            XCTAssertLessThan(Gamut.differenceOK(rgbBlend, truth), 0.03, "between \(a.location) and \(b.location)")
+        let pairs: [(Color, Color, ProGradient.Blend)] = [
+            (blue, yellow, .vivid),
+            (Color.proRed._450.toColor(), Color.proOrange._450.toColor(), .rainbow),
+        ]
+        for (first, last, blend) in pairs {
+            let start = first.resolvedOKLCH(for: .light), end = last.resolvedOKLCH(for: .light)
+            let stops = GradientStops.smooth([first, last], blend: blend, easing: .linear)
+            for (a, b) in zip(stops, stops.dropFirst()) {
+                let x = a.color.resolvedOKLCH(for: .light).toRGB(), y = b.color.resolvedOKLCH(for: .light).toRGB()
+                let rgbBlend = x.lerp(y, t: 0.5).toOKLCH()
+                let truth = GradientStops.interpolate(start, end, at: (a.location + b.location) / 2, blend: blend)
+                XCTAssertLessThan(Gamut.differenceOK(rgbBlend, truth), 0.025, "\(blend) between \(a.location) and \(b.location)")
+            }
         }
     }
 
@@ -108,7 +132,7 @@ final class GradientTests: XCTestCase {
     func testStopsRunEvenlyFromTheFirstColorToTheLast() {
         let pink = Color.proPink._500.toColor()
         let stops = GradientStops.smooth([blue, yellow, pink], blend: .vivid, easing: .smooth)
-        XCTAssertEqual(stops.count, GradientStops.steps(from: blue, to: yellow) + GradientStops.steps(from: yellow, to: pink) + 1)
+        XCTAssertEqual(stops.count, GradientStops.steps(from: blue, to: yellow, blend: .vivid) + GradientStops.steps(from: yellow, to: pink, blend: .vivid) + 1)
         XCTAssertEqual(stops.first?.location, 0)
         XCTAssertEqual(stops.last?.location, 1)
         XCTAssertEqual(stops.map(\.location), stops.map(\.location).sorted())
@@ -136,8 +160,25 @@ final class GradientTests: XCTestCase {
 
     // An angular gradient must end where it starts, or the ring shows a seam.
     func testAngularGradientsCloseTheLoop() {
-        let stops = GradientStops.smooth([blue, yellow], blend: .vivid, easing: .smooth, closingLoop: true)
+        let stops = GradientStops.smooth(GradientStops.closingLoop([blue, yellow]), blend: .vivid, easing: .smooth)
         XCTAssertEqual(stops.first?.color.hex(), stops.last?.color.hex())
+    }
+
+    // Tokens are built fresh on every use, so two identical ones are never equal as Colors. A ring that already
+    // ends on its first color must not be closed again: the extra segment would be a flat band a third of the way round.
+    func testALoopThatIsAlreadyClosedIsNotClosedAgain() {
+        let family = Color.proBlue
+        func token() -> Color { Color(light: family._300.toColor(), dark: family._700.toColor()) }
+        XCTAssertEqual(GradientStops.closingLoop([token(), yellow, token()]).count, 3)
+        XCTAssertEqual(GradientStops.closingLoop([token(), yellow]).count, 3)
+    }
+
+    // Easing matters most on fades, like a glow or a scrim. With too few stops a fade came out linear, so its edge
+    // was as hard as LinearGradient's: a tenth of the way along, the default easing must still be nearly opaque.
+    func testFadesFollowTheEasing() {
+        let stops = GradientStops.smooth([Color.proBlue._500.toColor(), .clear], blend: .vivid, easing: .smooth)
+        XCTAssertGreaterThan(opacity(at: 0.1, in: stops), 0.95)
+        XCTAssertLessThan(opacity(at: 0.9, in: stops), 0.05)
     }
 
     // A gradient between tokens stays adaptive, so it's right in both appearances.

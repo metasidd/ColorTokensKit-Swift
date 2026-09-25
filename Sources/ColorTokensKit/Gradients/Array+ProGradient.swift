@@ -11,7 +11,7 @@ import SwiftUI
 
 public extension Array where Element == Color {
     /// A smooth linear gradient through these colors, top to bottom unless you say otherwise.
-    /// It blends `.vivid`ly and eases `.smooth`ly unless you ask for something else.
+    /// By default it blends `.vivid` and eases `.smooth`.
     ///
     /// ```swift
     /// .background([theme.surfaceTertiary, theme.surfaceSecondary].proGradient())
@@ -51,7 +51,7 @@ public extension Array where Element == Color {
         blend: ProGradient.Blend = .vivid,
         easing: ProGradient.Easing = .smooth
     ) -> AngularGradient {
-        AngularGradient(stops: GradientStops.smooth(self, blend: blend, easing: easing, closingLoop: true), center: center)
+        AngularGradient(stops: GradientStops.smooth(GradientStops.closingLoop(self), blend: blend, easing: easing), center: center)
     }
 }
 
