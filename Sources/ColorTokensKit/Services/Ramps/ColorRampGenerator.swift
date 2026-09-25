@@ -3,8 +3,8 @@
 // ColorTokensKit
 //
 // Builds and caches 20-stop ramps. Chromatic ramps are keyed by OKLCH hue and
-// built by UniformRamp (shared lightness and chroma per stop); gray comes from
-// the palette data.
+// built by UniformRamp (shared lightness and chroma per stop); gray is listed
+// at the end of this file.
 //
 
 import Foundation
@@ -16,15 +16,9 @@ public class ColorRampGenerator {
     private static var interpolatedRamps: [String: [LCHColor]] = [:]
     private static var oklchInterpolatedRamps: [String: [OKLCHColor]] = [:]
     private static let cacheLock = NSLock()
-    private let colorPaletteData: ColorPaletteData
 
-    /// Initializes the color ramp generator with required palette data
-    public init() {
-        guard let data = ColorRampLoader.loadColorRamps() else {
-            fatalError("Required color palette data is missing")
-        }
-        colorPaletteData = data
-    }
+    /// Creates a ramp generator. Ramps are cached and shared by every generator.
+    public init() {}
 
     /// Generates a color ramp for a given hue value
     /// - Parameters:
@@ -33,21 +27,13 @@ public class ColorRampGenerator {
     ///   - isGrayscale: Whether to generate a grayscale ramp (ignoring hue)
     /// - Returns: Array of LCHColors representing the color ramp
     public func getColorRamp(forHue targetHue: Double, steps: Int? = nil, isGrayscale: Bool = false) -> [LCHColor] {
-        // Assign a constant value
+        if isGrayscale {
+            return Self.grayRamp
+        }
+
         let steps = steps ?? ColorConstants.rampStops
-
-        // Normalize the target hue consistently
         let normalizedTargetHue = targetHue.normalizedHue
-
-        // Handle grayscale and generate appropriate cache key
-        let cacheKey = {
-            if isGrayscale {
-                return "Gray-\(steps)"
-            } else {
-                // For color ramps, use the normalized hue value
-                return "H\(normalizedTargetHue)-\(steps)"
-            }
-        }()
+        let cacheKey = "H\(normalizedTargetHue)-\(steps)"
 
         // Check static cache first
         ColorRampGenerator.cacheLock.lock()
@@ -56,18 +42,6 @@ public class ColorRampGenerator {
             return cached
         }
         ColorRampGenerator.cacheLock.unlock()
-
-        // If grayscale is requested, use the gray ramp from palette data
-        if isGrayscale {
-            let grayRamp = colorPaletteData.colorRamps.first { $0.name == "gray" }
-            if let grayRamp = grayRamp {
-                let result = interpolateStops(from: grayRamp, to: grayRamp, t: 0)
-                ColorRampGenerator.cacheLock.lock()
-                ColorRampGenerator.interpolatedRamps[cacheKey] = result
-                ColorRampGenerator.cacheLock.unlock()
-                return result
-            }
-        }
 
         // Chromatic ramps are keyed by OKLCH hue and built uniformly (see UniformRamp).
         let result = UniformRamp.ramp(hue: normalizedTargetHue)
@@ -104,96 +78,28 @@ public class ColorRampGenerator {
         return result
     }
 
-    /// Interpolates between corresponding color stops of two ramps
-    /// - Parameters:
-    ///   - from: Starting color ramp
-    ///   - to: Ending color ramp
-    ///   - t: Interpolation factor (0-1)
-    /// - Returns: Array of interpolated LCHColors
-    private func interpolateStops(from: ColorRamp, to: ColorRamp, t: Double) -> [LCHColor] {
-        // Get sorted stops from both ramps - sort by numeric value of keys
-        let fromStops = from.stops.sorted { (Int($0.key) ?? 0) < (Int($1.key) ?? 0) }
-        let toStops = to.stops.sorted { (Int($0.key) ?? 0) < (Int($1.key) ?? 0) }
-
-        // Create evenly spaced indices for the requested number of steps
-        let stepSize = 1.0 / Double(ColorConstants.rampStops - 1)
-
-        return (0 ..< ColorConstants.rampStops).map { step in
-            // Round progress to 4 decimal places for consistency
-            let progress = ((Double(step) * stepSize) * 10000).rounded() / 10000
-
-            // Instead of rounding, find the bounding indices and interpolate between them
-            let fromFloatIndex = Double(fromStops.count - 1) * progress
-            let fromLowerIndex = Int(floor(fromFloatIndex))
-            let fromUpperIndex = Int(ceil(fromFloatIndex))
-            // Round fraction to 4 decimal places for consistency
-            let fromFraction = ((fromFloatIndex - Double(fromLowerIndex)) * 10000).rounded() / 10000
-
-            let toFloatIndex = Double(toStops.count - 1) * progress
-            let toLowerIndex = Int(floor(toFloatIndex))
-            let toUpperIndex = Int(ceil(toFloatIndex))
-            // Round fraction to 4 decimal places for consistency
-            let toFraction = ((toFloatIndex - Double(toLowerIndex)) * 10000).rounded() / 10000
-
-            // Get the bounding colors from both ramps
-            let fromLower = fromStops[fromLowerIndex].value
-            let fromUpper = fromStops[min(fromUpperIndex, fromStops.count - 1)].value
-            let toLower = toStops[toLowerIndex].value
-            let toUpper = toStops[min(toUpperIndex, toStops.count - 1)].value
-
-            // Interpolate within each ramp first
-            let fromInterpolated = LCHColor(
-                l: lerp(fromLower.l, fromUpper.l, fromFraction),
-                c: lerp(fromLower.c, fromUpper.c, fromFraction),
-                h: lerpHue(fromLower.h, fromUpper.h, fromFraction)
-            )
-
-            let toInterpolated = LCHColor(
-                l: lerp(toLower.l, toUpper.l, toFraction),
-                c: lerp(toLower.c, toUpper.c, toFraction),
-                h: lerpHue(toLower.h, toUpper.h, toFraction)
-            )
-
-            // Then interpolate between the ramps
-            return LCHColor(
-                l: lerp(fromInterpolated.l, toInterpolated.l, t),
-                c: lerp(fromInterpolated.c, toInterpolated.c, t),
-                h: lerpHue(fromInterpolated.h, toInterpolated.h, t)
-            )
-        }
-    }
-
-    /// Linear interpolation between two values
-    /// - Parameters:
-    ///   - a: Starting value
-    ///   - b: Ending value
-    ///   - t: Interpolation factor (0-1)
-    /// - Returns: Interpolated value
-    private func lerp(_ a: Double, _ b: Double, _ t: Double) -> Double {
-        // Normalize t to ensure consistent results
-        let normalizedT = t.rounded(to: ColorConstants.interpolationPrecision)
-        let result = a + ((b - a) * normalizedT)
-        
-        // Round to specified decimal places for consistency
-        return result.rounded(to: ColorConstants.valuePrecision)
-    }
-
-    /// Interpolates between two hue angles, taking the shortest path around the color wheel
-    /// - Parameters:
-    ///   - h1: Starting hue angle (0-360)
-    ///   - h2: Ending hue angle (0-360)
-    ///   - t: Interpolation factor (0-1)
-    /// - Returns: Interpolated hue angle
-    private func lerpHue(_ h1: Double, _ h2: Double, _ t: Double) -> Double {
-        // Normalize inputs to ensure consistent results
-        let normalizedH1 = h1.normalizedHue
-        let normalizedH2 = h2.normalizedHue
-        let normalizedT = t.rounded(to: ColorConstants.interpolationPrecision)
-        
-        let diff = (normalizedH2 - normalizedH1 + 360).normalizedHue
-        let shortestPath = diff <= 180 ? diff : diff - 360
-        let result = (normalizedH1 + shortestPath * normalizedT + 360).normalizedHue
-        
-        return result
-    }
+    /// The gray ramp, white to black. Gray has its own lightness ladder, tuned by eye, so it is
+    /// listed rather than generated.
+    private static let grayRamp: [LCHColor] = [
+        LCHColor(l: 99.9, c: 0.1, h: 246.48),
+        LCHColor(l: 96.41, c: 0.1, h: 246.03),
+        LCHColor(l: 92.45, c: 0.1, h: 245.98),
+        LCHColor(l: 88.08, c: 0.1, h: 245.64),
+        LCHColor(l: 83.03, c: 0.1, h: 245.49),
+        LCHColor(l: 77.66, c: 0.1, h: 245.49),
+        LCHColor(l: 72.1, c: 0.1, h: 245.49),
+        LCHColor(l: 66.16, c: 0.1, h: 245.49),
+        LCHColor(l: 59.97, c: 0.1, h: 245.49),
+        LCHColor(l: 54.13, c: 0.1, h: 245.52),
+        LCHColor(l: 47.87, c: 0.1, h: 245.96),
+        LCHColor(l: 41.61, c: 0.1, h: 245.99),
+        LCHColor(l: 35.34, c: 0.1, h: 245.99),
+        LCHColor(l: 29.4, c: 0.1, h: 246.31),
+        LCHColor(l: 23.58, c: 0.1, h: 246.49),
+        LCHColor(l: 17.97, c: 0.1, h: 246.49),
+        LCHColor(l: 12.76, c: 0.1, h: 246.5),
+        LCHColor(l: 7.95, c: 0.1, h: 246.5),
+        LCHColor(l: 3.59, c: 0.1, h: 246.5),
+        LCHColor(l: 0.1, c: 0.1, h: 246.5),
+    ]
 }

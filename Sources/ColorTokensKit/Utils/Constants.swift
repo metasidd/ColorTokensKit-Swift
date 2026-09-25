@@ -22,6 +22,5 @@ enum ColorConstants {
     
     // Precision constants for consistent rounding
     static let huePrecision: Int = 2  // Decimal places for hue values
-    static let valuePrecision: Int = 2  // Decimal places for general values
     static let interpolationPrecision: Int = 3  // Decimal places for interpolation factors
 }
