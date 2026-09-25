@@ -2,13 +2,13 @@
 //  ProGradient.swift
 //  ColorTokensKit
 //
-//  Smooth gradients. SwiftUI blends gradient colors either in the device's RGB
-//  space (`.device`), which takes distant colors through gray, or in a perceptual
-//  space it doesn't specify (`.perceptual`). ColorTokensKit adds in-between colors
-//  worked out in OKLCH, the space CSS uses for `linear-gradient(in oklch, …)`, so
-//  a gradient looks the same on every OS version and on the web, and you choose
-//  which way hues travel. It then hands back SwiftUI's own gradient types, so a
-//  smooth gradient works anywhere a gradient already does.
+//  Smooth gradients. SwiftUI's default on iOS (`.perceptual`) draws a straight
+//  line through OKLab, so distant colors meet in a paler middle; `.device` blends
+//  in RGB, through gray. ColorTokensKit adds in-between colors worked out in
+//  OKLCH, the space CSS uses for `linear-gradient(in oklch, …)`, so colors stay
+//  vivid, a gradient looks the same on every OS version and on the web, and you
+//  choose which way hues travel. It then hands back SwiftUI's own gradient types,
+//  so a smooth gradient works anywhere a gradient already does.
 //
 //      [top, bottom].proGradient()             // colors you choose
 //      brand.proGradient(.fade)                // generated from one color

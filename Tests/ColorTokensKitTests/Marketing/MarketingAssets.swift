@@ -25,6 +25,7 @@ public struct MarketingAssets {
         generateSimpleCardViewDarkModeImage(in: directory)
         generatePillViewImage(in: directory)
         generateSmoothGradientsImage(in: directory)
+        generateGradientRecipesImage(in: directory)
 
         logger.info("Completed marketing asset generation")
     }
@@ -63,6 +64,12 @@ public struct MarketingAssets {
         logger.info("Generating simple card view image...")
         let view = ThemedCardView().colorScheme(.dark)
         saveImage(view, name: "simple-card-dark-mode-view", size: ImageSize.size, in: directory)
+    }
+
+    private static func generateGradientRecipesImage(in directory: URL) {
+        logger.info("Generating gradient recipes image...")
+        let view = GradientRecipesView()
+        saveImage(view, name: "gradient-recipes", size: ImageSize.size, in: directory)
     }
 
     private static func generateSmoothGradientsImage(in directory: URL) {

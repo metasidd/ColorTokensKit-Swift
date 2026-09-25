@@ -332,7 +332,7 @@ Color.proBlue.backgroundSecondary.complement   // the color route: the same colo
 
 ![Smooth Gradients](/Assets/smooth-gradients.png)
 
-**Before:** every gradient is two or three more colors to pick, plus a start point and an end point, and distant colors can blend through gray.
+**Before:** every gradient is two or three more colors to pick, plus a start point and an end point, and distant colors meet in a pale middle, or pass through gray with `.device`.
 
 ```swift
 LinearGradient(colors: [Color("CardTop"), Color("CardBottom")], startPoint: .top, endPoint: .bottom)
@@ -350,12 +350,14 @@ glow.proGradient(.fade)                                          // fades out, k
 
 What you get:
 
-- **Smooth.** In-between colors are worked out in OKLCH, the space CSS uses for `linear-gradient(in oklch, …)`, so gradients look the same on every OS version and on the web. SwiftUI's own options either blend in the device's RGB space (`.device`), which takes distant colors through gray, or in a perceptual space it doesn't specify (`.perceptual`).
+- **Smooth.** In-between colors are worked out in OKLCH, the space CSS uses for `linear-gradient(in oklch, …)`, so gradients look the same on every OS version and on the web. SwiftUI's default on iOS (`.perceptual`) draws a straight line through OKLab, so distant colors meet in a paler middle, and `.device` blends in RGB, through gray.
 - **Drop-in.** You get SwiftUI's own `LinearGradient`, `EllipticalGradient` and `AngularGradient` back, so they go anywhere a gradient goes: `.background`, `.fill`, `.stroke`, `.foregroundStyle` for text and SF Symbols. iOS 16 and up.
 - **From one color.** Recipes turn a single color into a gradient (see the table below), and you can write your own.
 - **Your direction.** Choose which way hues travel round the color wheel: `.shorter` (the default), `.longer` for a rainbow sweep, `.increasing` or `.decreasing`.
 - **Dark mode for free.** A gradient between tokens is right in both appearances.
 - **Clean fades and rings.** A fade to `.clear` keeps its color all the way out, and angular gradients return to their first color, so there's no seam.
+
+![Gradient Recipes](/Assets/gradient-recipes.png)
 
 | Recipe | What it makes | Good for |
 |--------|---------------|----------|
