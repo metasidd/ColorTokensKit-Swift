@@ -350,10 +350,11 @@ glow.proGradient(.fade)                                          // fades out, k
 
 What you get:
 
-- **Smooth.** In-between colors are worked out in OKLCH, the space CSS uses for `linear-gradient(in oklch, …)`, so gradients look the same on every OS version and on the web. SwiftUI's default on iOS (`.perceptual`) draws a straight line through OKLab, so distant colors meet in a paler middle, and `.device` blends in RGB, through gray.
+- **Vivid, or direct.** By default (`.vivid`) colors travel round the color wheel in OKLCH, the space CSS uses for `linear-gradient(in oklch, …)`, so they stay saturated: blue to yellow passes teal and green. `blend: .direct` draws a straight line with no hues in between, which is SwiftUI's own look (its default `.perceptual` gradient measures as exactly this on iOS). `blend: .rainbow` goes the long way round. SwiftUI's `.device` blends in RGB, through gray.
+- **Gentle by default.** Easing uses SwiftUI's `Animation` names. The default, `.smooth`, starts and finishes gently, so a gradient has no hard edge where it meets the colors around it. `.linear`, `.easeIn`, `.easeOut`, `.easeInOut` and `.timingCurve(…)` are there when you want them.
+- **The same everywhere.** Gradients look the same on every OS version and on the web.
 - **Drop-in.** You get SwiftUI's own `LinearGradient`, `EllipticalGradient` and `AngularGradient` back, so they go anywhere a gradient goes: `.background`, `.fill`, `.stroke`, `.foregroundStyle` for text and SF Symbols. iOS 16 and up.
 - **From one color.** Recipes turn a single color into a gradient (see the table below), and you can write your own.
-- **Your direction.** Choose which way hues travel round the color wheel: `.shorter` (the default), `.longer` for a rainbow sweep, `.increasing` or `.decreasing`.
 - **Dark mode for free.** A gradient between tokens is right in both appearances.
 - **Clean fades and rings.** A fade to `.clear` keeps its color all the way out, and angular gradients return to their first color, so there's no seam.
 
@@ -376,8 +377,16 @@ From colors you choose, any array of `Color` or `ProColor`, harmonies included:
 .background(brand.analogous().proGradient(from: .leading, to: .trailing))
 .background([glow, .clear].proRadialGradient())                               // fills its view
 Circle().stroke(brand.triad.proAngularGradient(), lineWidth: 8)              // no seam
-[red, orange].proGradient(hue: .longer)                                       // the long way round
+[blue, yellow].proGradient(blend: .direct)                                    // a straight line, no green
+[red, orange].proGradient(blend: .rainbow)                                    // the long way round
+[glow, .clear].proGradient(easing: .easeOut)                                  // fades quickly, then lingers
 ```
+
+| Blend | Blue → yellow goes | Use it for |
+|-------|--------------------|------------|
+| `.vivid` (default) | Through teal and green, staying saturated | Brand gradients and harmonies |
+| `.direct` | Straight through a paler middle | When no other hues should appear |
+| `.rainbow` | The long way: through purple, red and orange | Rainbow sweeps |
 
 From a single color, with a recipe:
 

@@ -63,7 +63,7 @@ Public API on SwiftUI `Color`, so it works on tokens, system colors and hex colo
 
 - **Adjustments** — `lighten`/`darken`/`soften`/`strengthen(by:)` (whole stops), `saturate`/`desaturate(by:)`, `rotateHue(by:)`, `blend(with:by:)`, `invert()`. Maths in `ColorAdjustment`.
 - **Harmonies** — `complement`, `triad`, `tetrad(offset:)`, `square`, `splitComplement(spread:)`, `analogous(count:spread:)`, `harmony(_:)`, plus `monochromatic`/`tints`/`shades`. `ColorHarmony` is the single definition of the hue offsets; `ProColor+Harmonies` returns whole families from the same offsets.
-- **Gradients** — `proGradient`/`proRadialGradient`/`proAngularGradient` on `[Color]`, `[ProColor]`, `Color` and `ProColor` (single colors take a `ProGradient.Recipe`). `GradientStops` adds OKLCH in-between colors and returns SwiftUI's own gradient types.
+- **Gradients** — `proGradient`/`proRadialGradient`/`proAngularGradient` on `[Color]`, `[ProColor]`, `Color` and `ProColor` (single colors take a `ProGradient.Recipe`), with `blend:` (`.vivid` default, `.direct`, `.rainbow`) and `easing:` (`.smooth` default, SwiftUI `Animation` names). `GradientStops` adds in-between colors along the blend's path (step count scales with color distance), places them by the easing over the whole gradient, and returns SwiftUI's own gradient types.
 
 How they stay correct in light and dark mode: every function returns a Color built by `Color.adapting` (`Platform/SwiftUI/Color+Adaptive.swift`, with `NSColor+OKLCH`/`UIColor+OKLCH`), which resolves the original color for the current appearance each time it is drawn and applies the maths to that one resolved color. watchOS has no appearance switching, so it computes once.
 
