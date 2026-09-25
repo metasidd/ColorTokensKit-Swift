@@ -12,6 +12,7 @@ By designers, for developers.
 
 ```swift
 // One hue gives you a whole accessible palette, dark mode included
+// (foregroundPrimary and friends come from ColorTokens.swift, see Setup)
 Text("Hello").foregroundStyle(Color.proBlue.foregroundPrimary)
 
 // Adjust any color, and it stays right in dark mode
@@ -182,7 +183,7 @@ And voila — dark mode works out of the box. No extra code.
 
 ## 26 Built-in Pro Colors
 
-We ship gray and 25 hues so you can get started without choosing anything. Each hue sits where its name points: the median of nine color-naming sources (Radix, Tailwind, Material, Open Color, Ant Design, IBM Carbon, Apple's system colors, CSS named colors and the XKCD color survey), kept at least 10° from its neighbours.
+We ship gray and 25 hues so you can get started without choosing anything. Each hue sits where its name points: the median of nine color-naming sources (Radix, Tailwind, Material, Open Color, Ant Design, IBM Carbon, Apple's system colors, CSS named colors and the XKCD color survey), kept at least 10° from its neighbors.
 
 ```swift
 Color.proGray     Color.proPink     Color.proRuby     Color.proRed
@@ -282,11 +283,11 @@ Color.proBlue._200.toColor().invert()             // _850: same hue, mirrored st
 | `lighten(by:)`, `darken(by:)` | Moves up or down the palette by whole stops (default 1) |
 | `soften(by:)`, `strengthen(by:)` | Moves toward or away from the background: lighter or darker depending on the appearance |
 | `saturate(by:)`, `desaturate(by:)` | More or less vivid (default 20%); `desaturate(by: 1)` is gray |
-| `rotateHue(by:)` | Turns the hue round the color wheel, keeping lightness |
+| `rotateHue(by:)` | Turns the hue around the color wheel, keeping lightness |
 | `blend(with:by:)` | Mixes with another color in OKLab (SwiftUI's `mix` needs iOS 18) |
 | `invert()` | The same hue at the mirrored stop, `_200` ↔ `_850` (SwiftUI's `colorInvert()` flips RGB instead) |
 
-Palette colors move along the palette: `Color.proBlue._600.toColor().lighten()` is exactly `_550`, so contrast stays predictable. Any other color moves by the same visual step.
+Lightness and hue changes keep palette colors on the palette: `Color.proBlue._600.toColor().lighten()` is exactly `_550`, so contrast stays predictable. Any other color moves by the same visual step. `saturate`, `desaturate` and `blend` make colors off the palette, on purpose.
 
 ## Color Harmonies
 
@@ -312,7 +313,7 @@ accent.triad                              // accent and the two hues a third of 
 accent.square                             // four hues a quarter of the wheel apart
 accent.tetrad()                           // two complementary pairs, 60° apart
 accent.splitComplement()                  // accent and the hues either side of its complement
-accent.analogous()                        // 3 neighbors, 30° apart, accent in the middle
+accent.analogous()                        // 3 colors, 30° apart, accent in the middle
 accent.monochromatic()                    // 5 colors of the same hue, light to dark
 accent.tints()                            // 3 lighter, one stop apart
 accent.shades()                           // 3 darker, one stop apart
@@ -350,9 +351,9 @@ glow.proGradient(.fade)                                          // fades out, k
 
 What you get:
 
-- **Vivid, or direct.** By default (`.vivid`) colors travel round the color wheel in OKLCH, the space CSS uses for `linear-gradient(in oklch, …)`, so they stay saturated: blue to yellow passes teal and green. `blend: .direct` draws a straight line with no hues in between, which is SwiftUI's own look (its default `.perceptual` gradient measures as exactly this on iOS). `blend: .rainbow` goes the long way round. SwiftUI's `.device` blends in RGB, through gray.
+- **Vivid, or direct.** By default (`.vivid`) colors travel around the color wheel in OKLCH, the space CSS uses for `linear-gradient(in oklch, …)`, so they stay saturated: blue to yellow passes teal and green. `blend: .direct` draws a straight line with no hues in between, which is SwiftUI's own look (its default `.perceptual` gradient measures as exactly this on iOS). `blend: .rainbow` goes the long way around. SwiftUI's `.device` blends in RGB, through gray.
 - **Gentle by default.** Easing uses SwiftUI's `Animation` names. The default, `.smooth`, starts and finishes gently, so a gradient has no hard edge where it meets the colors around it. `.linear`, `.easeIn`, `.easeOut`, `.easeInOut` and `.timingCurve(…)` are there when you want them.
-- **The same everywhere.** Gradients look the same on every OS version and on the web.
+- **The same everywhere.** ColorTokensKit works out the in-between colors itself, so a gradient looks the same on every OS version. With `easing: .linear` it matches CSS's `linear-gradient(in oklch, …)` on the web.
 - **Drop-in.** You get SwiftUI's own `LinearGradient`, `EllipticalGradient` and `AngularGradient` back, so they go anywhere a gradient goes: `.background`, `.fill`, `.stroke`, `.foregroundStyle` for text and SF Symbols. iOS 16 and up.
 - **From one color.** Recipes turn a single color into a gradient (see the table below), and you can write your own.
 - **Dark mode for free.** A gradient between tokens is right in both appearances.
@@ -378,7 +379,7 @@ From colors you choose, any array of `Color` or `ProColor`, harmonies included:
 .background([glow, .clear].proRadialGradient())                               // fills its view
 Circle().stroke(brand.triad.proAngularGradient(), lineWidth: 8)              // no seam
 [blue, yellow].proGradient(blend: .direct)                                    // a straight line, no green
-[red, orange].proGradient(blend: .rainbow)                                    // the long way round
+[red, orange].proGradient(blend: .rainbow)                                    // the long way around
 [glow, .clear].proGradient(easing: .easeOut)                                  // fades quickly, then lingers
 ```
 
@@ -398,7 +399,7 @@ From a single color, with a recipe:
 accent.proGradient()               // .subtle: a touch lighter at the top
 tinge.proGradient(.fade)           // to transparent, keeping its color
 brand.proGradient(.tonal)          // two stops lighter to two stops darker
-brand.proGradient(.analogous)      // drifts to the neighboring hues
+brand.proGradient(.analogous)      // a neighboring hue, through brand, to the other
 card.proGradient(.wash)            // a soft, translucent tint
 Color.white.proGradient(.sheen, from: .topLeading, to: .bottomTrailing)
 rim.proGradient(.edgeHighlight, from: .leading, to: .trailing)
@@ -496,7 +497,7 @@ Color (any SwiftUI color)
 - **RGBColor** — sRGB, bridges to/from SwiftUI `Color`.
 - **ColorRampGenerator** — builds and caches 20-stop ramps: `UniformRamp` for hues (one lightness and one chroma per stop, shared by every hue), the palette data for gray.
 - **Adjustments, Harmonies, Gradients** — the color functions. Each returns a `Color` that is worked out when drawn, for the current appearance (`Color+Adaptive`).
-- **Gamut, StopLadder, PaletteStop** — shared maths: fitting colors into sRGB, the lightness of each stop, and recognizing palette colors so they move stop by stop.
+- **Gamut, StopLadder, PaletteStop** — shared math: fitting colors into sRGB, the lightness of each stop, and recognizing palette colors so they move stop by stop.
 
 ## Future Ideas
 

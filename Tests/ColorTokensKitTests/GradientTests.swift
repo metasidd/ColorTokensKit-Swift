@@ -165,7 +165,7 @@ final class GradientTests: XCTestCase {
     }
 
     // Tokens are built fresh on every use, so two identical ones are never equal as Colors. A ring that already
-    // ends on its first color must not be closed again: the extra segment would be a flat band a third of the way round.
+    // ends on its first color must not be closed again: the extra segment would be a flat band a third of the way around.
     func testALoopThatIsAlreadyClosedIsNotClosedAgain() {
         let family = Color.proBlue
         func token() -> Color { Color(light: family._300.toColor(), dark: family._700.toColor()) }
