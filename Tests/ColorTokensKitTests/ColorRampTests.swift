@@ -137,6 +137,40 @@ final class ColorRampTests: XCTestCase {
         XCTAssertLessThan(gray.c, 0.02, "proGray should have very low chroma, got \(gray.c)")
     }
 
+    // A ProColor is the 450 stop of its ramp, so re-deriving that stop must not move it.
+    // Stops were once rebuilt from the OKLCH hue read as a CIELab hue, and slid ~15°.
+    func testProColorIsItsOwn450Stop() {
+        for (name, color) in Color.allProHues {
+            XCTAssertEqual(color._450, color, "\(name)._450 drifted from \(name)")
+        }
+    }
+
+    // Before the fix proCobalt's stops came from the ramp at CIELab ~235, i.e. sky.
+    func testProColorStopsComeFromTheRampAtTheNamedHue() {
+        let ramp = ColorRampGenerator().getOKLCHColorRamp(forHue: 250)
+        XCTAssertEqual(Color.proCobalt.allStops.map(\.oklch), ramp)
+    }
+
+    // OKLCH hue and CIELab hue sit ~17° apart for this indigo; looking the ramp up by
+    // the OKLCH hue lands on a bluer ramp.
+    func testOKLCHStopsLookUpTheRampByCIELabHue() {
+        let indigo = ColorRampGenerator().getOKLCHColorRamp(forHue: 270)[8]
+        XCTAssertEqual(indigo._450.h, indigo.h, accuracy: 1)
+    }
+
+    // A stray hue in one stop (blue and indigo 1000 once had 134.54, a green) tints
+    // every ramp interpolated from it, even at zero chroma.
+    func testPaletteStopsStayNearTheirRampHue() {
+        let ramps = ColorRampLoader.loadColorRamps()!.colorRamps.filter { $0.name != "gray" }
+        for ramp in ramps {
+            let reference = ramp.stops["450"]!.h
+            for (key, stop) in ramp.stops {
+                let distance = abs((stop.h - reference + 540).truncatingRemainder(dividingBy: 360) - 180)
+                XCTAssertLessThan(distance, 20, "\(ramp.name) \(key) hue \(stop.h), ramp is ~\(reference)")
+            }
+        }
+    }
+
     func testProBlueHasBlueHue() {
         let blue = Color.proBlue
         // Blue hue in OKLCH is roughly 200-270

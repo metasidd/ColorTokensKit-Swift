@@ -14,8 +14,20 @@ public struct ProColor: Hashable, Sendable {
     /// The underlying OKLCH representation
     let oklch: OKLCHColor
 
+    /// CIELab hue of the ramp `_50`…`_1000` index into. The palette is keyed by
+    /// CIELab hue; `oklch.h` is a different scale (up to ~40° apart in blues).
+    let rampHue: Double
+
+    let isGrayscale: Bool
+
     public init(oklch: OKLCHColor) {
+        self.init(oklch: oklch, rampHue: Double(oklch.toLCH().h), isGrayscale: oklch.c <= 0.005)
+    }
+
+    init(oklch: OKLCHColor, rampHue: Double, isGrayscale: Bool) {
         self.oklch = oklch
+        self.rampHue = rampHue
+        self.isGrayscale = isGrayscale
     }
 
     /// Hue value (0-360)
@@ -55,29 +67,39 @@ public struct ProColor: Hashable, Sendable {
 
 public extension ProColor {
     var allStops: [ProColor] {
-        oklch.allStops.map { ProColor(oklch: $0) }
+        ramp.map { ProColor(oklch: $0, rampHue: rampHue, isGrayscale: isGrayscale) }
     }
 
-    var _50: ProColor { ProColor(oklch: oklch._50) }
-    var _100: ProColor { ProColor(oklch: oklch._100) }
-    var _150: ProColor { ProColor(oklch: oklch._150) }
-    var _200: ProColor { ProColor(oklch: oklch._200) }
-    var _250: ProColor { ProColor(oklch: oklch._250) }
-    var _300: ProColor { ProColor(oklch: oklch._300) }
-    var _350: ProColor { ProColor(oklch: oklch._350) }
-    var _400: ProColor { ProColor(oklch: oklch._400) }
-    var _450: ProColor { ProColor(oklch: oklch._450) }
-    var _500: ProColor { ProColor(oklch: oklch._500) }
-    var _550: ProColor { ProColor(oklch: oklch._550) }
-    var _600: ProColor { ProColor(oklch: oklch._600) }
-    var _650: ProColor { ProColor(oklch: oklch._650) }
-    var _700: ProColor { ProColor(oklch: oklch._700) }
-    var _750: ProColor { ProColor(oklch: oklch._750) }
-    var _800: ProColor { ProColor(oklch: oklch._800) }
-    var _850: ProColor { ProColor(oklch: oklch._850) }
-    var _900: ProColor { ProColor(oklch: oklch._900) }
-    var _950: ProColor { ProColor(oklch: oklch._950) }
-    var _1000: ProColor { ProColor(oklch: oklch._1000) }
+    var _50: ProColor { stop(at: 0) }
+    var _100: ProColor { stop(at: 1) }
+    var _150: ProColor { stop(at: 2) }
+    var _200: ProColor { stop(at: 3) }
+    var _250: ProColor { stop(at: 4) }
+    var _300: ProColor { stop(at: 5) }
+    var _350: ProColor { stop(at: 6) }
+    var _400: ProColor { stop(at: 7) }
+    var _450: ProColor { stop(at: 8) }
+    var _500: ProColor { stop(at: 9) }
+    var _550: ProColor { stop(at: 10) }
+    var _600: ProColor { stop(at: 11) }
+    var _650: ProColor { stop(at: 12) }
+    var _700: ProColor { stop(at: 13) }
+    var _750: ProColor { stop(at: 14) }
+    var _800: ProColor { stop(at: 15) }
+    var _850: ProColor { stop(at: 16) }
+    var _900: ProColor { stop(at: 17) }
+    var _950: ProColor { stop(at: 18) }
+    var _1000: ProColor { stop(at: 19) }
+}
+
+private extension ProColor {
+    var ramp: [OKLCHColor] {
+        ColorRampGenerator.shared.getOKLCHColorRamp(forHue: rampHue, isGrayscale: isGrayscale)
+    }
+
+    func stop(at index: Int) -> ProColor {
+        ProColor(oklch: ramp[index], rampHue: rampHue, isGrayscale: isGrayscale)
+    }
 }
 
 // MARK: - Factory
@@ -85,7 +107,11 @@ public extension ProColor {
 public extension ProColor {
     /// Creates a primary ProColor for a given hue
     static func primary(forHue hue: Double, isGrayscale: Bool = false) -> ProColor {
-        ProColor(oklch: OKLCHColor.getPrimaryColor(forHue: hue, isGrayscale: isGrayscale))
+        ProColor(
+            oklch: OKLCHColor.getPrimaryColor(forHue: hue, isGrayscale: isGrayscale),
+            rampHue: hue,
+            isGrayscale: isGrayscale
+        )
     }
 }
 
