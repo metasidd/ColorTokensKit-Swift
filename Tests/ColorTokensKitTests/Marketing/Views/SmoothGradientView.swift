@@ -22,7 +22,7 @@ struct SmoothGradientView: View {
                 Text("🌈 Smooth gradients")
                     .font(.system(size: 32, weight: .black))
                     .foregroundStyle(Color.foregroundPrimary)
-                Text("In-between colors in OKLCH: the same on every OS and on the web")
+                Text("In-between colors in OKLCH: the same on every OS version")
                     .font(.system(size: 24, weight: .regular))
                     .foregroundStyle(Color.foregroundTertiary)
             }

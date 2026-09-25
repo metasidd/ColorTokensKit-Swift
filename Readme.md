@@ -6,7 +6,7 @@ By designers, for developers.
 
 **Perceptually uniform color tokens for Swift and SwiftUI.** Generate accessible, themeable color ramps from any hue using OKLCH and CIELab LCH. Works on iOS, macOS, tvOS, watchOS, and visionOS.
 
-![Cover Image](/Assets/cover-image.png)
+![Cover Image](/Assets/cover-image.webp)
 
 ## A quick taste
 
@@ -120,7 +120,7 @@ The `ProColor` type wraps these ramps with semantic accessors — `.foregroundPr
 
 ### What's OKLCH?
 
-![Color System Comparison](/Assets/color-system-comparison.png)
+![Color System Comparison](/Assets/color-system-comparison.webp)
 
 **OKLCH** is Bjorn Ottosson's perceptually uniform color space, and it's what we use under the hood. It fixes CIELab's hue linearity issues — blues stay blue when you adjust chroma, instead of drifting toward purple. It's also what CSS Color Level 4, Tailwind v4, and most modern design tools have adopted.
 
@@ -128,11 +128,11 @@ The `ProColor` type wraps these ramps with semantic accessors — `.foregroundPr
 
 ### LCH Color Grid
 
-![LCH Color Grid](/Assets/color-grid.png)
+![LCH Color Grid](/Assets/color-grid.webp)
 
 ### OKLCH Color Grid
 
-![OKLCH Color Grid](/Assets/oklch-color-grid.png)
+![OKLCH Color Grid](/Assets/oklch-color-grid.webp)
 
 ## Quick Start
 
@@ -201,8 +201,8 @@ Each one is a `ProColor` with 20 stops (`_50` through `_1000`) and the full set 
 
 This is where it gets fun. Pass any `ProColor` as a theme, and your entire component gets a coherent, accessible color system — for free:
 
-![Simple Card View](/Assets/simple-card-view.png)
-![Simple Card Dark Mode View](/Assets/simple-card-dark-mode-view.png)
+![Simple Card View](/Assets/simple-card-view.webp)
+![Simple Card Dark Mode View](/Assets/simple-card-dark-mode-view.webp)
 
 ```swift
 struct CardView: View {
@@ -229,7 +229,7 @@ CardView(theme: Color.proGold)
 CardView(theme: .primary(forHue: 173)) // Any custom hue
 ```
 
-![Pill View](/Assets/pill-view.png)
+![Pill View](/Assets/pill-view.webp)
 
 ## Semantic Tokens
 
@@ -331,7 +331,7 @@ Color.proBlue.backgroundSecondary.complement   // the color route: the same colo
 
 ## Smooth Gradients
 
-![Smooth Gradients](/Assets/smooth-gradients.png)
+![Smooth Gradients](/Assets/smooth-gradients.webp)
 
 **Before:** every gradient is two or three more colors to pick, plus a start point and an end point, and distant colors meet in a pale middle, or pass through gray with `.device`.
 
@@ -359,7 +359,7 @@ What you get:
 - **Dark mode for free.** A gradient between tokens is right in both appearances.
 - **Clean fades and rings.** A fade to `.clear` keeps its color all the way out, and angular gradients return to their first color, so there's no seam.
 
-![Gradient Recipes](/Assets/gradient-recipes.png)
+![Gradient Recipes](/Assets/gradient-recipes.webp)
 
 | Recipe | What it makes | Good for |
 |--------|---------------|----------|
@@ -391,7 +391,7 @@ Circle().stroke(brand.triad.proAngularGradient(), lineWidth: 8)              // 
 
 Easing sets where along the gradient the colors change. The default, `.smooth`, lingers a little at both ends:
 
-![Gradient Easing](/Assets/gradient-easing.png)
+![Gradient Easing](/Assets/gradient-easing.webp)
 
 From a single color, with a recipe:
 

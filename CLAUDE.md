@@ -9,7 +9,11 @@ swift build
 swift test
 ```
 
-Tests generate marketing asset PNGs into `Tests/ColorTokensKitTests/Exports/`. These change across machines/OS versions — don't commit them unless intentional.
+Tests generate marketing asset PNGs into `Tests/ColorTokensKitTests/Exports/` (gitignored). README images live in `Assets/` as lossless WebP, a third the size of the PNGs with identical pixels. To update one, convert only the images that changed and commit them deliberately; every committed version stays in the clone forever (see CONTRIBUTING.md):
+
+```bash
+cwebp -lossless -z 9 -exact Tests/ColorTokensKitTests/Exports/<name>.png -o Assets/<name>.webp
+```
 
 ## Architecture
 
