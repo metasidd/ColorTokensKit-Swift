@@ -8,6 +8,25 @@ By designers, for developers.
 
 ![Cover Image](/Assets/cover-image.png)
 
+## A quick taste
+
+```swift
+// One hue gives you a whole accessible palette, dark mode included
+Text("Hello").foregroundStyle(Color.proBlue.foregroundPrimary)
+
+// Adjust any color, and it stays right in dark mode
+Text("Subtitle").foregroundStyle(theme.foregroundSecondary.soften())
+
+// Colors that go together, from one color
+let chartColors = brand.foregroundPrimary.triad
+
+// Gradients that stay vivid, from one color or many
+.background(brand.proGradient(.tonal))
+Circle().stroke(brand.triad.proAngularGradient(), lineWidth: 8)
+```
+
+Everything hands back a plain SwiftUI `Color` or gradient, so it drops into code you already have.
+
 ## Why does this exist?
 
 Swift's native color system gives you RGB and HSL. That's fine for picking a single color, but the moment you need a *system* of colors — consistent brightness across hues, accessible contrast, dark mode, theming — it falls apart. Two colors with the same "lightness" in RGB can look wildly different to the human eye.
@@ -49,6 +68,19 @@ Text("The Everything Company")
   .background(Color.red.secondary)                      // No control, limited to a few colors
   .background(Color.brandColorBackground)               // Needs many variables, hard to maintain
   .background(Color.brandColor.backgroundPrimary)       // Semantic, accessible, dark mode, ergonomic
+```
+
+Then the design asks for a quieter subtitle, an accent that goes with it, and a gradient:
+
+```swift
+.foregroundStyle(Color("SubtitleMuted"))                           // another asset: two more hex values
+.foregroundStyle(Color("AccentPairing"))                           // picked by eye, contrast unknown
+.background(LinearGradient(colors: [Color("CardTop"), Color("CardBottom")],
+                           startPoint: .top, endPoint: .bottom))   // two more assets, and it can go gray
+
+.foregroundStyle(theme.foregroundSecondary.soften())               // derived, adapts to dark mode
+.foregroundStyle(theme.foregroundSecondary.complement)             // same lightness, same contrast
+.background(theme.backgroundSecondary.proGradient())               // generated from one color, smooth
 ```
 
 ## But wait, what are design tokens?
@@ -214,6 +246,24 @@ Every `ProColor` provides these semantic tokens, each resolving to light/dark mo
 
 ## Color Functions
 
+**Before:** every variation is another color to pick, twice over for light and dark mode.
+
+```swift
+extension Color {
+    static let subtitle = Color("Subtitle")              // Assets.xcassets: a light hex and a dark hex
+    static let subtitleMuted = Color("SubtitleMuted")    // two more
+    static let subtitleStrong = Color("SubtitleStrong")  // and two more
+}
+```
+
+**After:** derive them. Each one follows the original into dark mode.
+
+```swift
+let subtitle = theme.foregroundSecondary
+subtitle.soften()       // quieter
+subtitle.strengthen()   // stronger
+```
+
 Every function works on any SwiftUI `Color` (a token, a system color, a hex color) and returns a new `Color` that stays correct in light and dark mode.
 
 ```swift
@@ -240,21 +290,35 @@ Palette colors move along the palette: `Color.proBlue._600.toColor().lighten()` 
 
 ## Color Harmonies
 
+**Before:** colors that "go together" are picked by eye, and nobody checks their contrast.
+
+```swift
+let series = [Color(hex: "#4C6EF5"), Color(hex: "#F76707"), Color(hex: "#12B886")]
+```
+
+**After:** ask for them. They share the original's lightness, so they share its contrast too.
+
+```swift
+let series = brand.foregroundPrimary.triad
+```
+
 Related colors come back ready to use, in the same role as the original: the triad of a background is three backgrounds. Every member keeps the original's lightness, so a harmony is balanced by construction. Parameters have defaults, so you only pass them to change something.
 
 ```swift
-brand.complement                         // the opposite hue
-brand.triad                              // brand and the two hues a third of the wheel away
-brand.square                             // four hues a quarter of the wheel apart
-brand.tetrad()                           // two complementary pairs, 60° apart
-brand.splitComplement()                  // brand and the hues either side of its complement
-brand.analogous()                        // 3 neighbors, 30° apart, brand in the middle
-brand.monochromatic()                    // 5 colors of the same hue, light to dark
-brand.tints()                            // 3 lighter, one stop apart
-brand.shades()                           // 3 darker, one stop apart
+let accent = theme.foregroundPrimary      // any Color: a token, a stop, a hex color
 
-brand.analogous(count: 5, spread: .degrees(15))
-brand.harmony(.splitComplement(spread: .degrees(20)))   // chosen at runtime
+accent.complement                         // the opposite hue
+accent.triad                              // accent and the two hues a third of the wheel away
+accent.square                             // four hues a quarter of the wheel apart
+accent.tetrad()                           // two complementary pairs, 60° apart
+accent.splitComplement()                  // accent and the hues either side of its complement
+accent.analogous()                        // 3 neighbors, 30° apart, accent in the middle
+accent.monochromatic()                    // 5 colors of the same hue, light to dark
+accent.tints()                            // 3 lighter, one stop apart
+accent.shades()                           // 3 darker, one stop apart
+
+accent.analogous(count: 5, spread: .degrees(15))
+accent.harmony(.splitComplement(spread: .degrees(20)))   // chosen at runtime
 ```
 
 The same harmonies work on a whole `ProColor` family and return families, so you can take any token of the related hue. Both routes give the same color:
@@ -268,7 +332,40 @@ Color.proBlue.backgroundSecondary.complement   // the color route: the same colo
 
 ![Smooth Gradients](/Assets/smooth-gradients.png)
 
-SwiftUI blends gradient colors either in the device's RGB space (`.device`), which takes distant colors through gray, or in a perceptual space it doesn't specify (`.perceptual`). `proGradient()` adds in-between colors worked out in OKLCH, the space CSS uses for `linear-gradient(in oklch, …)`, so gradients look the same on every OS version and on the web, and you choose which way hues travel. It returns SwiftUI's own gradient types, so it works in backgrounds, fills, strokes and text.
+**Before:** every gradient is two or three more colors to pick, plus a start point and an end point, and distant colors can blend through gray.
+
+```swift
+LinearGradient(colors: [Color("CardTop"), Color("CardBottom")], startPoint: .top, endPoint: .bottom)
+LinearGradient(colors: [glow, glow.opacity(0)], startPoint: .top, endPoint: .bottom)
+LinearGradient(colors: [.blue, .yellow], startPoint: .leading, endPoint: .trailing)
+```
+
+**After:** generate it from one color, or pass the colors you want. Top to bottom is the default.
+
+```swift
+card.proGradient()                                               // a touch lighter at the top
+glow.proGradient(.fade)                                          // fades out, keeping its color
+[Color.blue, .yellow].proGradient(from: .leading, to: .trailing) // stays vivid all the way across
+```
+
+What you get:
+
+- **Smooth.** In-between colors are worked out in OKLCH, the space CSS uses for `linear-gradient(in oklch, …)`, so gradients look the same on every OS version and on the web. SwiftUI's own options either blend in the device's RGB space (`.device`), which takes distant colors through gray, or in a perceptual space it doesn't specify (`.perceptual`).
+- **Drop-in.** You get SwiftUI's own `LinearGradient`, `EllipticalGradient` and `AngularGradient` back, so they go anywhere a gradient goes: `.background`, `.fill`, `.stroke`, `.foregroundStyle` for text and SF Symbols. iOS 16 and up.
+- **From one color.** Recipes turn a single color into a gradient (see the table below), and you can write your own.
+- **Your direction.** Choose which way hues travel round the color wheel: `.shorter` (the default), `.longer` for a rainbow sweep, `.increasing` or `.decreasing`.
+- **Dark mode for free.** A gradient between tokens is right in both appearances.
+- **Clean fades and rings.** A fade to `.clear` keeps its color all the way out, and angular gradients return to their first color, so there's no seam.
+
+| Recipe | What it makes | Good for |
+|--------|---------------|----------|
+| `.subtle` (default) | A touch lighter at the start | Buttons and icons, like SwiftUI's `Color.gradient` |
+| `.fade` | The color fading to transparent | Glows, scrims, soft edges |
+| `.tonal` | Two stops lighter to two stops darker | Depth on cards and headers |
+| `.analogous` | A drift through the neighboring hues | Banners and illustrations |
+| `.wash` | A soft, translucent tint | Card backdrops |
+| `.sheen` | A band of color, clear at both ends | A shine across a button (use white) |
+| `.edgeHighlight` | Strongest in the middle, faint at the ends | Borders and rims |
 
 From colors you choose, any array of `Color` or `ProColor`, harmonies included:
 
@@ -289,7 +386,7 @@ brand.proGradient(.tonal)          // two stops lighter to two stops darker
 brand.proGradient(.analogous)      // drifts to the neighboring hues
 card.proGradient(.wash)            // a soft, translucent tint
 Color.white.proGradient(.sheen, from: .topLeading, to: .bottomTrailing)
-border.proGradient(.edgeHighlight, from: .leading, to: .trailing)
+rim.proGradient(.edgeHighlight, from: .leading, to: .trailing)
 
 // Or your own
 extension ProGradient.Recipe {
