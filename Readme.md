@@ -511,6 +511,10 @@ Got a feature request? [Open an issue](https://github.com/metasidd/ColorTokensKi
 - [ ] Display P3 gamut awareness
 - [ ] OKLCH-native palette data (currently converts from LCH)
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for building and testing, updating the README images, keeping the repository small, and releasing.
+
 ## License
 
 MIT License. See [LICENSE](/LICENSE) for details.
