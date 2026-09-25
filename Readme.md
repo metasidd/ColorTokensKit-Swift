@@ -388,6 +388,10 @@ Circle().stroke(brand.triad.proAngularGradient(), lineWidth: 8)              // 
 | `.direct` | Straight through a paler middle | When no other hues should appear |
 | `.rainbow` | The long way: through purple, red and orange | Rainbow sweeps |
 
+Easing sets where along the gradient the colors change. The default, `.smooth`, lingers a little at both ends:
+
+![Gradient Easing](/Assets/gradient-easing.png)
+
 From a single color, with a recipe:
 
 ```swift

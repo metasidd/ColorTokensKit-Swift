@@ -26,6 +26,7 @@ public struct MarketingAssets {
         generatePillViewImage(in: directory)
         generateSmoothGradientsImage(in: directory)
         generateGradientRecipesImage(in: directory)
+        generateGradientEasingImage(in: directory)
 
         logger.info("Completed marketing asset generation")
     }
@@ -70,6 +71,12 @@ public struct MarketingAssets {
         logger.info("Generating gradient recipes image...")
         let view = GradientRecipesView()
         saveImage(view, name: "gradient-recipes", size: ImageSize.size, in: directory)
+    }
+
+    private static func generateGradientEasingImage(in directory: URL) {
+        logger.info("Generating gradient easing image...")
+        let view = GradientEasingView()
+        saveImage(view, name: "gradient-easing", size: ImageSize.size, in: directory)
     }
 
     private static func generateSmoothGradientsImage(in directory: URL) {
