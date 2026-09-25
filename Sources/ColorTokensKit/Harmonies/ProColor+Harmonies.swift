@@ -23,7 +23,7 @@ public extension ProColor {
         harmony(.triad)
     }
 
-    /// This family, its complement, and a second complementary pair `offset` round the wheel.
+    /// This family, the one `offset` around the wheel, and the complements of both, in that order.
     func tetrad(offset: Angle = .degrees(60)) -> [ProColor] {
         harmony(.tetrad(offset: offset))
     }
@@ -38,17 +38,18 @@ public extension ProColor {
         harmony(.splitComplement(spread: spread))
     }
 
-    /// `count` neighboring families `spread` apart, centered on this one.
+    /// `count` neighboring families `spread` apart, centered on this one. With an even `count`
+    /// there is no middle, so this family itself isn't one of them.
     func analogous(count: Int = 3, spread: Angle = .degrees(30)) -> [ProColor] {
         harmony(.analogous(count: count, spread: spread))
     }
 
-    /// The families of a harmony, starting from this one.
+    /// The families of a harmony built from this one, in the order of its `hueOffsets`.
     func harmony(_ harmony: ColorHarmony) -> [ProColor] {
         harmony.hueOffsets.map { $0 == 0 ? self : rotateHue(by: .degrees($0)) }
     }
 
-    /// The family `angle` round the hue wheel, at this color's stop. Gray has no hue, so it stays gray.
+    /// The family `angle` around the hue wheel, at this color's stop. Gray has no hue, so it stays gray.
     ///
     /// ```swift
     /// Color.proBlue.rotateHue(by: .degrees(30))

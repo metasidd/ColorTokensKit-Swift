@@ -24,12 +24,4 @@
             self.init(red: rgb.r, green: rgb.g, blue: rgb.b, alpha: rgb.alpha)
         }
     }
-
-    #if !os(watchOS)
-        extension Appearance {
-            init(_ traits: UITraitCollection) {
-                self = traits.userInterfaceStyle == .dark ? .dark : .light
-            }
-        }
-    #endif
 #endif

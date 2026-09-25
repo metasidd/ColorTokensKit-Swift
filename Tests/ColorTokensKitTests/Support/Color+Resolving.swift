@@ -11,8 +11,8 @@ import SwiftUI
 
 extension Color {
     /// This color as 8-bit sRGB hex in one appearance, e.g. "#3c80c4".
-    func hex(_ appearance: Appearance = .light) -> String {
-        resolvedOKLCH(for: appearance).hex
+    func hex(_ colorScheme: ColorScheme = .light) -> String {
+        resolvedOKLCH(for: colorScheme).hex
     }
 }
 

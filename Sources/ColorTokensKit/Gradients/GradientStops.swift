@@ -23,9 +23,9 @@ enum GradientStops {
 
     /// How many steps a pair of colors needs, from how far apart they are in either appearance.
     static func steps(from start: Color, to end: Color) -> Int {
-        let distance = [Appearance.light, .dark].map { appearance in
+        let distance = ColorScheme.allCases.map { colorScheme in
             let (a, b) = ColorAdjustment.sharingColorAcrossTransparency(
-                start.resolvedOKLCH(for: appearance), end.resolvedOKLCH(for: appearance)
+                start.resolvedOKLCH(for: colorScheme), end.resolvedOKLCH(for: colorScheme)
             )
             return Gamut.differenceOK(a, b)
         }.max() ?? 0

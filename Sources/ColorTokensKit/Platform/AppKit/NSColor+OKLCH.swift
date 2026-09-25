@@ -7,6 +7,7 @@
 
 #if canImport(AppKit)
 import AppKit
+import SwiftUI
 
 extension OKLCHColor {
     /// Reads an NSColor, already resolved for the current drawing appearance, as OKLCH.
@@ -24,7 +25,8 @@ extension NSColor {
     }
 }
 
-extension Appearance {
+extension ColorScheme {
+    /// The color scheme of an AppKit appearance. UIKit's trait collections have this built in.
     init(_ appearance: NSAppearance) {
         self = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? .dark : .light
     }

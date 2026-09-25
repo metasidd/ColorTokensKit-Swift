@@ -40,15 +40,15 @@ struct GradientRecipesView: View {
                             .frame(width: 200, height: 200)
                     }
                     tile(".tonal", "brand.proGradient(.tonal)") {
-                        card(fill: AnyShapeStyle(brand.proGradient(.tonal)), text: .white)
+                        card(fill: brand.proGradient(.tonal), text: .white)
                     }
                     tile(".analogous", "brand.proGradient(.analogous, …)") {
-                        card(fill: AnyShapeStyle(brand.proGradient(.analogous, from: .leading, to: .trailing)), text: .white)
+                        card(fill: brand.proGradient(.analogous, from: .leading, to: .trailing), text: .white)
                     }
                 }
                 GridRow {
                     tile(".wash", "brand.proGradient(.wash)") {
-                        card(fill: AnyShapeStyle(brand.proGradient(.wash)), text: brand._900.toColor())
+                        card(fill: brand.proGradient(.wash), text: brand._900.toColor())
                     }
                     tile(".sheen", "Color.white.proGradient(.sheen, …)") {
                         Text("Upgrade")
@@ -69,7 +69,7 @@ struct GradientRecipesView: View {
                             .frame(width: 300, height: 170)
                     }
                     tile("Your own", "brand.proGradient(.deepen)") {
-                        card(fill: AnyShapeStyle(brand.proGradient(.deepen)), text: .white)
+                        card(fill: brand.proGradient(.deepen), text: .white)
                     }
                 }
             }
@@ -96,7 +96,7 @@ struct GradientRecipesView: View {
         }
     }
 
-    private func card(fill: AnyShapeStyle, text: Color) -> some View {
+    private func card(fill: some ShapeStyle, text: Color) -> some View {
         RoundedRectangle(cornerRadius: 28)
             .fill(fill)
             .frame(width: 300, height: 170)

@@ -2,7 +2,7 @@
 //  Gamut.swift
 //  ColorTokensKit
 //
-//  sRGB gamut maths in OKLCH, shared by ramp generation, color adjustments and
+//  sRGB gamut math in OKLCH, shared by ramp generation, color adjustments and
 //  gradients. Lightness is usually held as CIELab L*, because L* is a direct
 //  function of luminance, which is what WCAG contrast measures.
 //
@@ -59,12 +59,17 @@ enum Gamut {
         return [r, g, b].allSatisfy { $0 >= -1e-6 && $0 <= 1 + 1e-6 }
     }
 
+    /// Whether sRGB can show this chroma at this luminance and hue. No chroma always fits.
+    static func fits(chroma: Double, luminance: Double, hue: Double) -> Bool {
+        chroma <= 0 || contains(lightness: lightness(forLuminance: luminance, chroma: chroma, hue: hue), chroma: chroma, hue: hue)
+    }
+
     /// Most OKLCH chroma sRGB can show at this luminance and hue.
     static func maxChroma(luminance: Double, hue: Double) -> Double {
         var low = 0.0, high = 0.5
         for _ in 0 ..< 30 {
             let middle = (low + high) / 2
-            if contains(lightness: lightness(forLuminance: luminance, chroma: middle, hue: hue), chroma: middle, hue: hue) {
+            if fits(chroma: middle, luminance: luminance, hue: hue) {
                 low = middle
             } else {
                 high = middle
@@ -133,7 +138,8 @@ extension OKLCHColor {
         Gamut.lightnessStar(luminance: Gamut.luminance(lightness: Double(l), chroma: Double(c), hue: Double(h)))
     }
 
-    /// Chroma this low has no visible hue; such colors use the gray ramp.
+    /// Chroma this low has no visible hue; such colors use the gray ramp. This is the one gray test:
+    /// `ProColor` uses it too, so a family and its colors agree on what is gray.
     var isAchromatic: Bool {
         c <= 0.005
     }

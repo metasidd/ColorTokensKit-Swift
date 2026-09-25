@@ -41,6 +41,7 @@ final class AdjustmentTests: XCTestCase {
         XCTAssertEqual(gray._300.toColor().darken().hex(), gray._350.toColor().hex())
     }
 
+    // There is no stop past _50 or _1000, so a palette color holds at the end instead of leaving the palette.
     func testLightnessHoldsAtTheEndsOfTheRamp() {
         XCTAssertEqual(blue._50.toColor().lighten().hex(), blue._50.toColor().hex())
         XCTAssertEqual(blue._1000.toColor().darken(by: 3).hex(), blue._1000.toColor().hex())
@@ -67,6 +68,7 @@ final class AdjustmentTests: XCTestCase {
         XCTAssertEqual(gray.lightnessStar, source.resolvedOKLCH(for: .light).lightnessStar, accuracy: 0.3)
     }
 
+    // Saturating must not change contrast, and must stay inside sRGB, or the display clips it and shifts its hue.
     func testSaturateAddsChromaAtTheSameLightnessAndStaysDisplayable() {
         let green = Color.proGreen._500.toColor()
         let source = green.resolvedOKLCH(for: .light)
@@ -78,6 +80,7 @@ final class AdjustmentTests: XCTestCase {
 
     // MARK: - Hue
 
+    // Hue wraps at 360°. If a full turn landed anywhere else, every rotation and harmony built on one would be off.
     func testRotatingAFullTurnGivesTheSameColor() {
         XCTAssertEqual(blue._500.toColor().rotateHue(by: .degrees(360)).hex(), blue._500.toColor().hex())
     }
@@ -91,6 +94,7 @@ final class AdjustmentTests: XCTestCase {
 
     // MARK: - Mixing and inversion
 
+    // `fraction` 0 is this color and 1 is `other`; if either end is off, every blend in between is off too.
     func testBlendEndsAreTheTwoColors() {
         let a = blue._500.toColor(), b = Color.proPink._500.toColor()
         XCTAssertEqual(a.blend(with: b, by: 0).hex(), a.hex())

@@ -6,20 +6,9 @@ final class GradientTests: XCTestCase {
     private let blue = Color(red: 0, green: 0, blue: 1)
     private let yellow = Color(red: 1, green: 1, blue: 0)
 
-    /// The resolved colors of a gradient's stops, in order.
-    private func resolved(_ stops: [Gradient.Stop], _ appearance: Appearance = .light) -> [OKLCHColor] {
-        stops.map { $0.color.resolvedOKLCH(for: appearance) }
-    }
-
     /// The stop nearest a location, e.g. the middle of a two-color gradient.
     private func stop(nearest location: Double, in stops: [Gradient.Stop]) -> Gradient.Stop {
         stops.min { abs($0.location - location) < abs($1.location - location) }!
-    }
-
-    /// Distance between two colors in OKLab: about 0.01 is just noticeable side by side.
-    private func distance(_ a: OKLCHColor, _ b: OKLCHColor) -> Double {
-        let x = a.toOKLab(), y = b.toOKLab()
-        return Double(sqrt(pow(x.l - y.l, 2) + pow(x.a - y.a, 2) + pow(x.b - y.b, 2)))
     }
 
     // MARK: - The path
@@ -39,6 +28,7 @@ final class GradientTests: XCTestCase {
         XCTAssertEqual(middle.hex, "#6cabc7")
     }
 
+    // `.rainbow` exists to take the other way around: red → gold must pass blue, not orange, or choosing it does nothing.
     func testRainbowGoesTheLongWayRound() {
         let red = Color.proRed._500.toColor().resolvedOKLCH(for: .light) // hue 24°
         let gold = Color.proGold._500.toColor().resolvedOKLCH(for: .light) // hue 78°
@@ -58,11 +48,13 @@ final class GradientTests: XCTestCase {
         XCTAssertEqual(ProGradient.Easing.linear.location(forProgress: 0.3), 0.3, accuracy: 0.000_001)
     }
 
+    // The names promise SwiftUI's meanings. Swapped, a glow eased `.easeOut` would linger instead of fading quickly.
     func testEaseInStartsSlowlyAndEaseOutStartsQuickly() {
         XCTAssertGreaterThan(ProGradient.Easing.easeIn.location(forProgress: 0.5), 0.55)
         XCTAssertLessThan(ProGradient.Easing.easeOut.location(forProgress: 0.5), 0.45)
     }
 
+    // `timingCurve` is how a curve from CSS or a design tool is matched, so the same numbers must give the same curve.
     func testACustomCurveBehavesLikeTheBuiltInOneWithTheSameShape() {
         XCTAssertEqual(ProGradient.Easing.timingCurve(0.42, 0, 0.58, 1), .easeInOut)
     }
@@ -106,12 +98,13 @@ final class GradientTests: XCTestCase {
         let stops = GradientStops.smooth([blue, yellow], blend: .vivid, easing: .linear)
         for (a, b) in zip(stops, stops.dropFirst()) {
             let x = a.color.resolvedOKLCH(for: .light).toRGB(), y = b.color.resolvedOKLCH(for: .light).toRGB()
-            let rgbBlend = RGBColor(r: (x.r + y.r) / 2, g: (x.g + y.g) / 2, b: (x.b + y.b) / 2, alpha: 1).toOKLCH()
+            let rgbBlend = x.lerp(y, t: 0.5).toOKLCH()
             let truth = GradientStops.interpolate(start, end, at: (a.location + b.location) / 2, blend: .vivid)
-            XCTAssertLessThan(distance(rgbBlend, truth), 0.03, "between \(a.location) and \(b.location)")
+            XCTAssertLessThan(Gamut.differenceOK(rgbBlend, truth), 0.03, "between \(a.location) and \(b.location)")
         }
     }
 
+    // Every color passed in must appear exactly and in order, the middle one in the middle, with no stop doubled.
     func testStopsRunEvenlyFromTheFirstColorToTheLast() {
         let pink = Color.proPink._500.toColor()
         let stops = GradientStops.smooth([blue, yellow, pink], blend: .vivid, easing: .smooth)
@@ -129,7 +122,7 @@ final class GradientTests: XCTestCase {
     // Fading to .clear should only fade. The color keeps its hue, lightness and chroma instead of drifting toward black.
     func testFadingToClearKeepsTheColor() {
         let source = Color.proBlue._500.toColor()
-        let colors = resolved(GradientStops.smooth([source, .clear], blend: .vivid, easing: .smooth))
+        let colors = GradientStops.smooth([source, .clear], blend: .vivid, easing: .smooth).map { $0.color.resolvedOKLCH(for: .light) }
         let original = source.resolvedOKLCH(for: .light)
         for color in colors.dropLast() {
             XCTAssertEqual(Double(color.h), Double(original.h), accuracy: 1)
@@ -159,6 +152,7 @@ final class GradientTests: XCTestCase {
 
     // MARK: - Recipes
 
+    // Each recipe is documented by the colors it makes; one that drifts from its description misleads whoever picks it.
     func testRecipesMakeTheColorsTheyDescribe() {
         let source = Color.proBlue._500.toColor()
         XCTAssertEqual(ProGradient.Recipe.subtle.colors(from: source).first?.hex(), Color.proBlue._450.toColor().hex())
@@ -179,6 +173,7 @@ final class GradientTests: XCTestCase {
         XCTAssertGreaterThan(edge[1], edge[2])
     }
 
+    // The README shows how to write your own recipe; this is that example, and it lands on a real palette stop.
     func testCustomRecipesAreFirstClass() {
         let deepen = ProGradient.Recipe { [$0, $0.darken(by: 4)] }
         XCTAssertEqual(deepen.colors(from: Color.proBlue._500.toColor()).last?.hex(), Color.proBlue._700.toColor().hex())

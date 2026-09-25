@@ -17,7 +17,8 @@ final class HarmonyTests: XCTestCase {
         }
     }
 
-    // Every harmony starts from the original color, untouched: even one sRGB can't show, like Display P3 red.
+    // Every harmony except analogous (which is centered on the color) starts with the original, untouched:
+    // even one sRGB can't show, like Display P3 red.
     func testHarmoniesStartWithTheOriginalColor() {
         let source = blue._500.toColor()
         XCTAssertEqual(source.triad[0].hex(), source.hex())
@@ -29,6 +30,7 @@ final class HarmonyTests: XCTestCase {
         XCTAssertEqual(displayP3Red.triad[0], displayP3Red)
     }
 
+    // Two half turns must come back exactly, or switching to the complement and back drifts a color off the palette.
     func testComplementOfTheComplementIsTheOriginal() {
         let source = blue._500.toColor()
         XCTAssertEqual(source.complement.complement.hex(), source.hex())
@@ -65,12 +67,14 @@ final class HarmonyTests: XCTestCase {
         XCTAssertEqual(token.complement.hex(.dark), blue.complement._300.toColor().hex())
     }
 
+    // Callers index into tints and shades (`tints()[0]` is the nearest), so their order and spacing are part of the API.
     func testTintsAreLighterAndShadesDarkerOneStopAtATime() {
         let source = blue._500.toColor()
         XCTAssertEqual(source.tints().map { $0.hex() }, [blue._450, blue._400, blue._350].map { $0.toColor().hex() })
         XCTAssertEqual(source.shades().map { $0.hex() }, [blue._550, blue._600, blue._650].map { $0.toColor().hex() })
     }
 
+    // A monochromatic set covers the whole ramp, so its ends are the ramp's own lightest and darkest stops, in order.
     func testMonochromaticSpansTheRampFromLightToDark() {
         let colors = blue._500.toColor().monochromatic()
         XCTAssertEqual(colors.first?.hex(), blue._50.toColor().hex())
@@ -79,8 +83,8 @@ final class HarmonyTests: XCTestCase {
         XCTAssertEqual(lightness, lightness.sorted(by: >))
     }
 
-    /// Degrees from one hue to another, going up round the wheel.
+    /// Degrees from one hue to another, going up around the wheel.
     private func turn(from start: Double, to end: Double) -> Double {
-        (end - start + 360).truncatingRemainder(dividingBy: 360)
+        (end - start).normalizedHue
     }
 }

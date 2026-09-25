@@ -11,24 +11,22 @@
 
 import Foundation
 
-struct PaletteStop: Equatable {
+struct PaletteStop {
     /// OKLCH hue of the ramp. Gray has no hue and ignores it.
     let hue: Double
     /// 0 is _50, 19 is _1000.
     let index: Int
     let isGray: Bool
 
-    /// How far a color may sit from a stop and still count as it: covers 8-bit rounding and float noise.
+    /// How far a color may sit from a stop and still count as it: enough for 8-bit rounding and float
+    /// noise, and far less than the 3.5 L* or more between neighboring stops.
     static let lightnessTolerance = 0.6
+    /// The same for chroma.
     static let chromaTolerance = 0.006
-
-    private static var lastIndex: Int {
-        ColorConstants.rampStops - 1
-    }
 
     init(hue: Double, index: Int, isGray: Bool) {
         self.hue = hue
-        self.index = min(max(index, 0), Self.lastIndex)
+        self.index = min(max(index, 0), ColorConstants.rampStops - 1)
         self.isGray = isGray
     }
 
@@ -42,38 +40,21 @@ struct PaletteStop: Equatable {
             self.init(hue: 0, index: index, isGray: true)
             return
         }
-        guard let index = StopLadder.chromatic.stop(atLightnessStar: lightnessStar, tolerance: Self.lightnessTolerance) else {
+        guard let index = StopLadder.chromatic.stop(atLightnessStar: lightnessStar, tolerance: Self.lightnessTolerance),
+              UniformRamp.isChroma(Double(color.c), atStop: index, hue: Double(color.h), tolerance: Self.chromaTolerance)
+        else {
             return nil
-        }
-        let chroma = Double(color.c)
-        let target = UniformRamp.chroma[index]
-        if abs(chroma - target) > Self.chromaTolerance {
-            // A hue sRGB can't push to the stop's chroma sits at its gamut limit instead.
-            guard chroma < target else { return nil }
-            let luminance = Gamut.luminance(lightnessStar: UniformRamp.lightness[index])
-            let limit = UniformRamp.gamutMargin * Gamut.maxChroma(luminance: luminance, hue: Double(color.h))
-            guard abs(chroma - limit) <= Self.chromaTolerance else { return nil }
         }
         self.init(hue: Double(color.h), index: index, isGray: false)
     }
 
     /// The palette color at this stop.
-    func color(alpha: CGFloat = 1) -> OKLCHColor {
+    func color(alpha: CGFloat) -> OKLCHColor {
         let stop = ColorRampGenerator.shared.getOKLCHColorRamp(forHue: hue, isGrayscale: isGray)[index]
         return OKLCHColor(l: stop.l, c: stop.c, h: stop.h, alpha: alpha)
     }
 
-    /// The stop `offset` steps darker (negative is lighter), held at the ends of the ramp.
-    func moved(by offset: Int) -> PaletteStop {
-        PaletteStop(hue: hue, index: index + offset, isGray: isGray)
-    }
-
-    /// The same position counted from the other end of the ramp: _200 ↔ _850.
-    func mirrored() -> PaletteStop {
-        PaletteStop(hue: hue, index: Self.lastIndex - index, isGray: isGray)
-    }
-
-    /// The same stop on the ramp `degrees` round the hue wheel. Gray has no hue, so it stays gray.
+    /// The same stop on the ramp `degrees` around the hue wheel. Gray has no hue, so it stays gray.
     func rotated(byDegrees degrees: Double) -> PaletteStop {
         isGray ? self : PaletteStop(hue: (hue + degrees).normalizedHue, index: index, isGray: false)
     }

@@ -33,34 +33,33 @@ public extension Color {
     /// Color.proBlue._600.toColor().darken()      // exactly Color.proBlue._650
     /// ```
     func darken(by stops: Int = 1) -> Color {
-        adapting { color, _ in ColorAdjustment.shiftingLightness(of: color, byStops: stops) }
+        lighten(by: -stops)
     }
 
-    /// A version closer to the background, for less emphasis: lighter in light mode, darker in dark mode.
+    /// A version `stops` steps closer to the background, for less emphasis: lighter in light mode, darker in dark mode.
     ///
     /// ```swift
     /// theme.foregroundPrimary.soften()           // quieter text in both appearances
     /// ```
     func soften(by stops: Int = 1) -> Color {
-        adapting { color, appearance in
-            ColorAdjustment.shiftingLightness(of: color, byStops: appearance == .light ? -stops : stops)
+        adapting { color, colorScheme in
+            ColorAdjustment.shiftingLightness(of: color, byStops: colorScheme == .light ? -stops : stops)
         }
     }
 
-    /// A version further from the background, for more emphasis: darker in light mode, lighter in dark mode.
+    /// A version `stops` steps further from the background, for more emphasis: darker in light mode, lighter in dark mode.
     ///
     /// ```swift
     /// theme.foregroundTertiary.strengthen()      // stands out more in both appearances
     /// ```
     func strengthen(by stops: Int = 1) -> Color {
-        adapting { color, appearance in
-            ColorAdjustment.shiftingLightness(of: color, byStops: appearance == .light ? stops : -stops)
-        }
+        soften(by: -stops)
     }
 
     // MARK: - Saturation
 
-    /// A more vivid version: `amount` 0.2 means 20% more chroma, as far as the screen can show.
+    /// A more vivid version: `amount` 0.2 means 20% more chroma, as far as sRGB can show.
+    /// Gray, white and black have no hue to strengthen, so they come back unchanged.
     ///
     /// ```swift
     /// Color.proGreen._500.toColor().saturate()
@@ -75,12 +74,13 @@ public extension Color {
     /// badge.desaturate(by: 1)                     // a gray version, e.g. for a finished state
     /// ```
     func desaturate(by amount: Double = 0.2) -> Color {
-        adapting { color, _ in ColorAdjustment.scalingChroma(of: color, by: 1 - amount) }
+        saturate(by: -amount)
     }
 
     // MARK: - Hue
 
-    /// The same color with its hue turned round the color wheel, at the same lightness.
+    /// The same color with its hue turned around the color wheel, at the same lightness.
+    /// Gray, white and black have no hue, so they come back unchanged.
     ///
     /// ```swift
     /// Color.proBlue._500.toColor().rotateHue(by: .degrees(30))

@@ -31,7 +31,7 @@ public extension Color {
         harmony(.triad)
     }
 
-    /// This color, its complement, and a second complementary pair `offset` round the wheel.
+    /// This color, the hue `offset` around the wheel, and the complements of both, in that order.
     ///
     /// ```swift
     /// badge.tetrad()                     // offset 60°
@@ -54,7 +54,8 @@ public extension Color {
         harmony(.splitComplement(spread: spread))
     }
 
-    /// `count` neighboring hues `spread` apart, centered on this color.
+    /// `count` neighboring hues `spread` apart, centered on this color. With an even `count`
+    /// there is no middle, so this color itself isn't one of them.
     ///
     /// ```swift
     /// brand.analogous()                  // 3 colors, 30° apart
@@ -64,7 +65,8 @@ public extension Color {
         harmony(.analogous(count: count, spread: spread))
     }
 
-    /// The colors of a harmony, starting from this color. Useful when the harmony is chosen at runtime.
+    /// The colors of a harmony built from this color, in the order of its `hueOffsets`.
+    /// Useful when the harmony is chosen at runtime.
     ///
     /// ```swift
     /// brand.harmony(.splitComplement(spread: .degrees(20)))

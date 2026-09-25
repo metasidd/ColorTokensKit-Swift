@@ -34,4 +34,15 @@ enum UniformRamp {
             return OKLCHColor(l: oklabLightness, c: chroma, h: hue).toRGB().toLCH()
         }
     }
+
+    /// Whether `chroma` is what `ramp(hue:)` gives `hue` at a stop, within `tolerance`: the shared chroma,
+    /// or the gamut limit of a hue that can't reach it. Two gamut checks bracket that limit, which is far
+    /// cheaper than searching for it, and this runs every time a color function draws.
+    static func isChroma(_ chroma: Double, atStop index: Int, hue: Double, tolerance: Double) -> Bool {
+        if abs(chroma - self.chroma[index]) <= tolerance { return true }
+        guard chroma < self.chroma[index] else { return false }
+        let luminance = Gamut.luminance(lightnessStar: lightness[index])
+        return Gamut.fits(chroma: (chroma - tolerance) / gamutMargin, luminance: luminance, hue: hue)
+            && !Gamut.fits(chroma: (chroma + tolerance) / gamutMargin, luminance: luminance, hue: hue)
+    }
 }
