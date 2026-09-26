@@ -3,7 +3,7 @@
 // ColorTokensKit
 //
 // Builds and caches 20-stop ramps. Chromatic ramps are keyed by OKLCH hue and
-// built by UniformRamp (shared lightness per stop, the most chroma sRGB allows); gray is listed
+// built by UniformRamp (shared lightness and chroma per stop, in Display P3); gray is listed
 // at the end of this file.
 //
 

@@ -114,7 +114,7 @@ In ColorTokensKit, each token maps a semantic role (like "primary background" or
 
 ## How It Works
 
-ColorTokensKit generates a 20-stop ramp for any OKLCH hue, from near-white (`_50`) to near-black (`_1000`). Every hue shares the same lightness at each stop. Lightness is CIELab L\*, so a given stop has the same contrast (WCAG) whatever the hue. Chroma is the most each hue can show in sRGB at that lightness, so every stop is as vivid as the screen allows at its contrast.
+ColorTokensKit generates a 20-stop ramp for any OKLCH hue, from near-white (`_50`) to near-black (`_1000`). Every hue shares the same lightness and the same chroma at each stop. Lightness is CIELab L\*, so a given stop has the same contrast (WCAG) whatever the hue. Chroma is the most that 29 of the 36 named hues can show in Display P3, the gamut of every iPhone since the iPhone 7, so every stop is as vivid as it can be while the hues stay even; the few hues that can't reach it keep 98% of their limit. On an sRGB-only screen, like many external monitors, the system clips these colors, so they look a little less vivid there.
 
 The `ProColor` type wraps these ramps with semantic accessors — `.foregroundPrimary`, `.backgroundSecondary`, `.outlineTertiary` — that automatically resolve to the right stop for light and dark mode.
 
@@ -181,18 +181,21 @@ VStack {
 
 And voila — dark mode works out of the box. No extra code.
 
-## 26 Built-in Pro Colors
+## 37 Built-in Pro Colors
 
-We ship gray and 25 hues so you can get started without choosing anything. Each hue sits where its name points: the median of nine color-naming sources (Radix, Tailwind, Material, Open Color, Ant Design, IBM Carbon, Apple's system colors, CSS named colors and the XKCD color survey), kept at least 10° from its neighbors.
+We ship gray and 36 hues so you can get started without choosing anything. The hues sit every 10° around the OKLCH wheel, so neighbors are equally far apart. The 25 names from 2.0 each sit within 5° of where their name points: the median of nine color-naming sources (Radix, Tailwind, Material, Open Color, Ant Design, IBM Carbon, Apple's system colors, CSS named colors and the XKCD color survey). Coral, amber, mustard, chartreuse, emerald, turquoise, cerulean, azure, grape, orchid and rose fill the gaps between them.
 
 ```swift
-Color.proGray     Color.proPink     Color.proRuby     Color.proRed
-Color.proTomato   Color.proOrange   Color.proBrown    Color.proGold
-Color.proYellow   Color.proOlive    Color.proLime     Color.proGrass
-Color.proGreen    Color.proJade     Color.proMint     Color.proTeal
-Color.proCyan     Color.proSky      Color.proBlue     Color.proCobalt
-Color.proIndigo   Color.proIris     Color.proViolet   Color.proPurple
-Color.proPlum     Color.proMagenta
+Color.proGray        Color.proPink        Color.proRuby        Color.proRed
+Color.proTomato      Color.proCoral       Color.proOrange      Color.proBrown
+Color.proAmber       Color.proGold        Color.proMustard     Color.proYellow
+Color.proOlive       Color.proChartreuse  Color.proLime        Color.proGrass
+Color.proGreen       Color.proJade        Color.proEmerald     Color.proMint
+Color.proTeal        Color.proTurquoise   Color.proCyan        Color.proCerulean
+Color.proSky         Color.proAzure       Color.proBlue        Color.proCobalt
+Color.proIndigo      Color.proIris        Color.proViolet      Color.proGrape
+Color.proPurple      Color.proOrchid      Color.proPlum        Color.proMagenta
+Color.proRose
 ```
 
 Each one is a `ProColor` with 20 stops (`_50` through `_1000`) and the full set of semantic tokens for foreground, background, surface, outline, and their inverted variants.
@@ -494,10 +497,10 @@ Color (any SwiftUI color)
 - **ProColor** — the recommended type for design tokens. Wraps OKLCH internally, so we can evolve the internals without breaking your code.
 - **OKLCHColor / OKLabColor** — OKLCH polar and OKLab cartesian forms (Ottosson's reference).
 - **LCHColor / LABColor / XYZColor** — CIELab color spaces.
-- **RGBColor** — sRGB, bridges to/from SwiftUI `Color`.
-- **ColorRampGenerator** — builds and caches 20-stop ramps: `UniformRamp` for hues (one lightness per stop, shared by every hue, and the most chroma sRGB allows), the palette data for gray.
+- **RGBColor** — extended sRGB, bridges to/from SwiftUI `Color`. Display P3 colors have channels below 0 or above 1.
+- **ColorRampGenerator** — builds and caches 20-stop ramps: `UniformRamp` for hues (one lightness and one chroma per stop, shared by every hue, in Display P3), the palette data for gray.
 - **Adjustments, Harmonies, Gradients** — the color functions. Each returns a `Color` that is worked out when drawn, for the current appearance (`Color+Adaptive`).
-- **Gamut, StopLadder, PaletteStop** — shared math: fitting colors into sRGB, the lightness of each stop, and recognizing palette colors so they move stop by stop.
+- **Gamut, StopLadder, PaletteStop** — shared math: fitting colors into Display P3, the lightness of each stop, and recognizing palette colors so they move stop by stop.
 
 ## Future Ideas
 

@@ -157,18 +157,19 @@ final class ColorSpaceConversionTests: XCTestCase {
         XCTAssertTrue(color.c > 100, "Red hex should have high chroma")
     }
 
-    // MARK: - Gamut Clamping
+    // MARK: - Extended sRGB
 
-    func testOutOfGamutLCHClampsRGBToValidRange() {
-        // Highly saturated LCH color that would produce out-of-gamut RGB
-        let outOfGamut = LCHColor(l: 50, c: 128, h: 270) // extreme blue-purple
-        let rgb = outOfGamut.toRGB()
-        XCTAssertGreaterThanOrEqual(rgb.r, 0, "R should be clamped >= 0, got \(rgb.r)")
-        XCTAssertLessThanOrEqual(rgb.r, 1, "R should be clamped <= 1, got \(rgb.r)")
-        XCTAssertGreaterThanOrEqual(rgb.g, 0, "G should be clamped >= 0, got \(rgb.g)")
-        XCTAssertLessThanOrEqual(rgb.g, 1, "G should be clamped <= 1, got \(rgb.g)")
-        XCTAssertGreaterThanOrEqual(rgb.b, 0, "B should be clamped >= 0, got \(rgb.b)")
-        XCTAssertLessThanOrEqual(rgb.b, 1, "B should be clamped <= 1, got \(rgb.b)")
+    // Palette colors are Display P3, so converting to RGB must keep a color beyond sRGB rather than clip it, which
+    // would dull it and shift its hue and contrast. Its channels leave 0…1, and it converts back unchanged.
+    func testColorsBeyondSRGBSurviveConversion() {
+        let green = OKLCHColor(l: 0.8, c: 0.27, h: 145)
+        XCTAssertTrue(Gamut.contains(lightness: 0.8, chroma: 0.27, hue: 145), "The example must be inside Display P3")
+        let rgb = green.toRGB()
+        XCTAssertTrue([rgb.r, rgb.g, rgb.b].contains { $0 < 0 || $0 > 1 }, "The example must be beyond sRGB")
+        let back = rgb.toOKLCH()
+        XCTAssertEqual(back.l, green.l, accuracy: 0.0001)
+        XCTAssertEqual(back.c, green.c, accuracy: 0.0001)
+        XCTAssertEqual(back.h, green.h, accuracy: 0.01)
     }
 
     func testInGamutColorUnaffectedByClamping() {

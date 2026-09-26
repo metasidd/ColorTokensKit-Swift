@@ -12,8 +12,10 @@ swift test
 Tests generate marketing asset PNGs into `Tests/ColorTokensKitTests/Exports/` (gitignored). README images live in `Assets/` as lossless WebP, a third the size of the PNGs with identical pixels. To update one, convert only the images that changed and commit them deliberately; every committed version stays in the clone forever (see CONTRIBUTING.md):
 
 ```bash
-cwebp -lossless -z 9 -exact Tests/ColorTokensKitTests/Exports/<name>.png -o Assets/<name>.webp
+cwebp -lossless -z 9 -exact -metadata icc Tests/ColorTokensKitTests/Exports/<name>.png -o Assets/<name>.webp
 ```
+
+The PNGs are Display P3; `-metadata icc` keeps that profile, and without it browsers read the colors as sRGB.
 
 ## Architecture
 
@@ -24,7 +26,7 @@ Four color space structs, each with `+Conversions`, `+Interpolation`, and `+Mani
 - **LCHColor** — the primary type. Lightness (0-100), Chroma (0-128), Hue (0-360). All hue values are normalized on init.
 - **LABColor** — CIELAB, intermediate in conversions.
 - **XYZColor** — CIE XYZ, intermediate in conversions.
-- **RGBColor** — sRGB, bridges to/from SwiftUI `Color`.
+- **RGBColor** — extended sRGB, bridges to/from SwiftUI `Color`. Display P3 colors have channels below 0 or above 1; nothing clamps them except hex output.
 
 Conversion chain: `LCH <-> LAB <-> XYZ <-> RGB <-> Color`
 
@@ -34,7 +36,7 @@ Hand-tuned LCH color stops for base hues (gray, pink, red, orange, etc.). Each p
 
 ### Color ramp generation (`Sources/ColorTokensKit/Services/Ramps/`)
 
-`ColorRampGenerator.getColorRamp(forHue:steps:isGrayscale:)` is the core engine. The hue is an OKLCH hue. `UniformRamp.oklchRamp(hue:)` builds 20 stops (lightest to darkest) that share one CIELab L* per stop with every other hue (the table lives in `UniformRamp`), each at 98% of the most OKLCH chroma sRGB allows at that lightness and hue. The OKLCH ramps come from it directly and keep the exact hue: stops sit on the sRGB edge, so a hue that drifted 0.01° would move a channel by one 8-bit step when a color function rebuilds a stop. Gray comes from the JSON.
+`ColorRampGenerator.getColorRamp(forHue:steps:isGrayscale:)` is the core engine. The hue is an OKLCH hue. `UniformRamp.oklchRamp(hue:)` builds 20 stops (lightest to darkest) that share one CIELab L* and one OKLCH chroma per stop with every other hue (the tables live in `UniformRamp`). The chroma is the most that 29 of the 36 named hues can show in Display P3; a hue that can't reach it keeps 98% of its limit. The OKLCH ramps come from it directly and keep the exact hue: a clamped stop sits near the P3 edge, so a hue that drifted 0.01° would move a channel when a color function rebuilds a stop. Gray comes from the JSON.
 
 Results are cached in a static dictionary keyed by normalized hue + step count.
 
@@ -59,7 +61,7 @@ Full set includes foreground, inverted foreground, background, inverted backgrou
 
 ### Pro colors (`Color+ProColors.swift`)
 
-Gray plus 25 hues (`Color.proBlue`, `Color.proRed`, etc.) at OKLCH hues, each at the median hue nine color-naming sources give its name (see the comment in the file). Each resolves to the "primary" stop of a generated ramp (index `steps/2 - 2`).
+Gray plus 36 hues (`Color.proBlue`, `Color.proRed`, etc.), one every 10° of OKLCH hue. The 25 names from 2.0 sit within 5° of the median hue nine color-naming sources give them (see the comment in the file). Each resolves to the "primary" stop of a generated ramp (index `steps/2 - 2`).
 
 ### Color functions (`Adjustments/`, `Harmonies/`, `Gradients/`)
 
@@ -71,7 +73,7 @@ Public API on SwiftUI `Color`, so it works on tokens, system colors and hex colo
 
 How they stay correct in light and dark mode: every function returns a Color built by `Color.adapting` (`Platform/SwiftUI/Color+Adaptive.swift`, with `NSColor+OKLCH`/`UIColor+OKLCH`), which resolves the original color (or colors, for `blend` and gradient steps) for the current appearance each time it is drawn and applies the math to those resolved values. watchOS has no appearance switching, so it computes once.
 
-Shared math in `Services/Ramps/`: `Gamut` (OKLCH/sRGB fitting, also used by `UniformRamp`), `StopLadder` (the lightness of each stop; chromatic and gray ladders), `PaletteStop` (recognizes a color that sits exactly on a ramp).
+Shared math in `Services/Ramps/`: `Gamut` (OKLCH/Display P3 fitting, also used by `UniformRamp`), `StopLadder` (the lightness of each stop; chromatic and gray ladders), `PaletteStop` (recognizes a color that sits exactly on a ramp).
 
 ### Platform support (`Sources/ColorTokensKit/Platform/`)
 
@@ -82,6 +84,7 @@ Shared math in `Services/Ramps/`: `Gamut` (OKLCH/sRGB fitting, also used by `Uni
 
 ## Key Conventions
 
+- Colors are extended sRGB end to end, so the palette's Display P3 colors survive: don't clamp channels to 0…1 except for hex output, and build `NSColor`s in `.extendedSRGB` (`NSColor(srgbRed:)` gets clipped when AppKit converts it).
 - Color functions must return an adaptive color (`adapting`), never a color resolved once at call time, or tokens break in dark mode.
 - Lightness and hue functions move palette colors to exact palette stops (via `PaletteStop`; `ColorAdjustment.moving` owns the split for lightness); only colors that aren't on a ramp move continuously. `saturate`, `desaturate` and `blend` leave the palette on purpose.
 - Naming follows SwiftUI's own copy-returning style (`Color.mix`, `Color.opacity`): plain verbs, no `get`. Names must not collide with `View`/`ShapeStyle` members, because `Color` is both (so `desaturate`, not `saturation`). Gradient functions carry the `pro` prefix.

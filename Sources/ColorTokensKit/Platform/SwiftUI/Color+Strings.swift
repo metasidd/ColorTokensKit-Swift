@@ -9,7 +9,8 @@ import SwiftUI
 
 public extension Color {
 
-    /// Converts the `LCHColor` to a hexadecimal string representation.
+    /// This color as an sRGB hex string. Hex can't hold colors beyond sRGB, so each channel of a Display P3
+    /// color is clamped into sRGB.
     func getHexString() -> String {
         let rgb = RGBColor(color: self)
         let r = Double(max(0, min(rgb.r, 1)))

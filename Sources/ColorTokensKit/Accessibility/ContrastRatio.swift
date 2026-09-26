@@ -19,8 +19,11 @@ public enum ContrastMethod {
 public extension RGBColor {
     /// Relative luminance per WCAG 2.x definition (0 = darkest, 1 = lightest)
     var relativeLuminance: CGFloat {
+        // Sign-preserving, so the channels of a Display P3 color below 0 count at their true weight.
         func linearize(_ v: CGFloat) -> CGFloat {
-            return v <= 0.04045 ? v / 12.92 : pow((v + 0.055) / 1.055, 2.4)
+            let magnitude = abs(v)
+            let linear = magnitude <= 0.04045 ? magnitude / 12.92 : pow((magnitude + 0.055) / 1.055, 2.4)
+            return v < 0 ? -linear : linear
         }
         return 0.2126 * linearize(r) + 0.7152 * linearize(g) + 0.0722 * linearize(b)
     }
@@ -54,10 +57,12 @@ public extension RGBColor {
     /// Based on APCA-W3 0.0.98G-4g (Silver/WCAG 3.0 candidate).
     private func apcaContrast(text: RGBColor) -> CGFloat {
         // Estimated screen luminance using sRGB coefficients with APCA exponent
+        // Sign-preserving, so a Display P3 color's channels below 0 don't turn the result into NaN.
         func screenLuminance(_ color: RGBColor) -> CGFloat {
-            let rLin = pow(color.r, 2.4)
-            let gLin = pow(color.g, 2.4)
-            let bLin = pow(color.b, 2.4)
+            func simpleExponent(_ v: CGFloat) -> CGFloat { v < 0 ? -pow(-v, 2.4) : pow(v, 2.4) }
+            let rLin = simpleExponent(color.r)
+            let gLin = simpleExponent(color.g)
+            let bLin = simpleExponent(color.b)
             return 0.2126729 * rLin + 0.7151522 * gLin + 0.0721750 * bLin
         }
 
