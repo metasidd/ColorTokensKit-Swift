@@ -104,6 +104,15 @@ private extension ProColor {
 // MARK: - Factory
 
 public extension ProColor {
+    /// A family from a hex color, such as your brand color: `ProColor(hex: "#00B386")`.
+    ///
+    /// The color's OKLCH hue gives the ramp, so the stops and tokens match every other family's lightness
+    /// and contrast. The color itself stays the family's own color (`toColor()`), even though it usually
+    /// sits between two stops. A gray hex gives the gray family. Same as `ProColor(oklch: OKLCHColor(hex:))`.
+    init(hex: String) {
+        self.init(oklch: OKLCHColor(hex: hex))
+    }
+
     /// Creates a primary ProColor for a given hue
     static func primary(forHue hue: Double, isGrayscale: Bool = false) -> ProColor {
         ProColor(
