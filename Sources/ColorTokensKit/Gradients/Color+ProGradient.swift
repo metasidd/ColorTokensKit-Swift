@@ -56,7 +56,7 @@ public extension Color {
     }
 }
 
-public extension ProColor {
+public extension ProTheme {
     /// A smooth linear gradient generated from this family's color.
     ///
     /// ```swift

@@ -2,7 +2,7 @@
 //  Array+ProGradient.swift
 //  ColorTokensKit
 //
-//  Smooth gradients through colors you choose: any array of Color or ProColor,
+//  Smooth gradients through colors you choose: any array of Color or ProTheme,
 //  harmonies such as `brand.triad` included. Each function returns SwiftUI's own
 //  gradient type, so it works in backgrounds, fills, strokes and text.
 //
@@ -55,7 +55,7 @@ public extension Array where Element == Color {
     }
 }
 
-public extension Array where Element == ProColor {
+public extension Array where Element == ProTheme {
     /// A smooth linear gradient through these families' colors, top to bottom unless you say otherwise.
     ///
     /// ```swift

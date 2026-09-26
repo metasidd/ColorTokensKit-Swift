@@ -21,46 +21,46 @@ public extension Color {
     // Carbon, Apple, CSS and the XKCD survey give the name. Coral, amber, mustard, chartreuse, emerald, turquoise,
     // cerulean, azure, grape, orchid and rose fill the gaps between them.
     // Pro color getters
-    static var proGray: ProColor { .primary(forHue: 0, isGrayscale: true) }
-    static var proPink: ProColor { .primary(forHue: 0) }
-    static var proRuby: ProColor { .primary(forHue: 10) }
-    static var proRed: ProColor { .primary(forHue: 20) }
-    static var proTomato: ProColor { .primary(forHue: 30) }
-    static var proCoral: ProColor { .primary(forHue: 40) }
-    static var proOrange: ProColor { .primary(forHue: 50) }
-    static var proBrown: ProColor { .primary(forHue: 60) }
-    static var proAmber: ProColor { .primary(forHue: 70) }
-    static var proGold: ProColor { .primary(forHue: 80) }
-    static var proMustard: ProColor { .primary(forHue: 90) }
-    static var proYellow: ProColor { .primary(forHue: 100) }
-    static var proOlive: ProColor { .primary(forHue: 110) }
-    static var proChartreuse: ProColor { .primary(forHue: 120) }
-    static var proLime: ProColor { .primary(forHue: 130) }
-    static var proGrass: ProColor { .primary(forHue: 140) }
-    static var proGreen: ProColor { .primary(forHue: 150) }
-    static var proJade: ProColor { .primary(forHue: 160) }
-    static var proEmerald: ProColor { .primary(forHue: 170) }
-    static var proMint: ProColor { .primary(forHue: 180) }
-    static var proTeal: ProColor { .primary(forHue: 190) }
-    static var proTurquoise: ProColor { .primary(forHue: 200) }
-    static var proCyan: ProColor { .primary(forHue: 210) }
-    static var proCerulean: ProColor { .primary(forHue: 220) }
-    static var proSky: ProColor { .primary(forHue: 230) }
-    static var proAzure: ProColor { .primary(forHue: 240) }
-    static var proBlue: ProColor { .primary(forHue: 250) }
-    static var proCobalt: ProColor { .primary(forHue: 260) }
-    static var proIndigo: ProColor { .primary(forHue: 270) }
-    static var proIris: ProColor { .primary(forHue: 280) }
-    static var proViolet: ProColor { .primary(forHue: 290) }
-    static var proGrape: ProColor { .primary(forHue: 300) }
-    static var proPurple: ProColor { .primary(forHue: 310) }
-    static var proOrchid: ProColor { .primary(forHue: 320) }
-    static var proPlum: ProColor { .primary(forHue: 330) }
-    static var proMagenta: ProColor { .primary(forHue: 340) }
-    static var proRose: ProColor { .primary(forHue: 350) }
+    static var proGray: ProTheme { .primary(forHue: 0, isGrayscale: true) }
+    static var proPink: ProTheme { .primary(forHue: 0) }
+    static var proRuby: ProTheme { .primary(forHue: 10) }
+    static var proRed: ProTheme { .primary(forHue: 20) }
+    static var proTomato: ProTheme { .primary(forHue: 30) }
+    static var proCoral: ProTheme { .primary(forHue: 40) }
+    static var proOrange: ProTheme { .primary(forHue: 50) }
+    static var proBrown: ProTheme { .primary(forHue: 60) }
+    static var proAmber: ProTheme { .primary(forHue: 70) }
+    static var proGold: ProTheme { .primary(forHue: 80) }
+    static var proMustard: ProTheme { .primary(forHue: 90) }
+    static var proYellow: ProTheme { .primary(forHue: 100) }
+    static var proOlive: ProTheme { .primary(forHue: 110) }
+    static var proChartreuse: ProTheme { .primary(forHue: 120) }
+    static var proLime: ProTheme { .primary(forHue: 130) }
+    static var proGrass: ProTheme { .primary(forHue: 140) }
+    static var proGreen: ProTheme { .primary(forHue: 150) }
+    static var proJade: ProTheme { .primary(forHue: 160) }
+    static var proEmerald: ProTheme { .primary(forHue: 170) }
+    static var proMint: ProTheme { .primary(forHue: 180) }
+    static var proTeal: ProTheme { .primary(forHue: 190) }
+    static var proTurquoise: ProTheme { .primary(forHue: 200) }
+    static var proCyan: ProTheme { .primary(forHue: 210) }
+    static var proCerulean: ProTheme { .primary(forHue: 220) }
+    static var proSky: ProTheme { .primary(forHue: 230) }
+    static var proAzure: ProTheme { .primary(forHue: 240) }
+    static var proBlue: ProTheme { .primary(forHue: 250) }
+    static var proCobalt: ProTheme { .primary(forHue: 260) }
+    static var proIndigo: ProTheme { .primary(forHue: 270) }
+    static var proIris: ProTheme { .primary(forHue: 280) }
+    static var proViolet: ProTheme { .primary(forHue: 290) }
+    static var proGrape: ProTheme { .primary(forHue: 300) }
+    static var proPurple: ProTheme { .primary(forHue: 310) }
+    static var proOrchid: ProTheme { .primary(forHue: 320) }
+    static var proPlum: ProTheme { .primary(forHue: 330) }
+    static var proMagenta: ProTheme { .primary(forHue: 340) }
+    static var proRose: ProTheme { .primary(forHue: 350) }
 
     // Dictionary of all pro colors
-    static var allProHues: [String: ProColor] {
+    static var allProHues: [String: ProTheme] {
         [
             "Gray": proGray,
             "Pink": proPink,

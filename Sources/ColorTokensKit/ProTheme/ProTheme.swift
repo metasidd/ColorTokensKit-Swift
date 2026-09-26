@@ -1,5 +1,5 @@
 //
-//  ProColor.swift
+//  ProTheme.swift
 //  ColorTokensKit
 //
 //  A stable public type for design system colors. Wraps the underlying
@@ -10,7 +10,11 @@
 import Foundation
 import SwiftUI
 
-public struct ProColor: Hashable, Sendable {
+/// The name before 3.0. Code written for 2.x keeps compiling, and Xcode offers to rename it.
+@available(*, deprecated, renamed: "ProTheme")
+public typealias ProColor = ProTheme
+
+public struct ProTheme: Hashable, Sendable {
     /// The underlying OKLCH representation
     let oklch: OKLCHColor
 
@@ -64,58 +68,58 @@ public struct ProColor: Hashable, Sendable {
 
 // MARK: - Stops
 
-public extension ProColor {
-    var allStops: [ProColor] {
-        ramp.map { ProColor(oklch: $0, rampHue: rampHue, isGrayscale: isGrayscale) }
+public extension ProTheme {
+    var allStops: [ProTheme] {
+        ramp.map { ProTheme(oklch: $0, rampHue: rampHue, isGrayscale: isGrayscale) }
     }
 
-    var _50: ProColor { stop(at: 0) }
-    var _100: ProColor { stop(at: 1) }
-    var _150: ProColor { stop(at: 2) }
-    var _200: ProColor { stop(at: 3) }
-    var _250: ProColor { stop(at: 4) }
-    var _300: ProColor { stop(at: 5) }
-    var _350: ProColor { stop(at: 6) }
-    var _400: ProColor { stop(at: 7) }
-    var _450: ProColor { stop(at: 8) }
-    var _500: ProColor { stop(at: 9) }
-    var _550: ProColor { stop(at: 10) }
-    var _600: ProColor { stop(at: 11) }
-    var _650: ProColor { stop(at: 12) }
-    var _700: ProColor { stop(at: 13) }
-    var _750: ProColor { stop(at: 14) }
-    var _800: ProColor { stop(at: 15) }
-    var _850: ProColor { stop(at: 16) }
-    var _900: ProColor { stop(at: 17) }
-    var _950: ProColor { stop(at: 18) }
-    var _1000: ProColor { stop(at: 19) }
+    var _50: ProTheme { stop(at: 0) }
+    var _100: ProTheme { stop(at: 1) }
+    var _150: ProTheme { stop(at: 2) }
+    var _200: ProTheme { stop(at: 3) }
+    var _250: ProTheme { stop(at: 4) }
+    var _300: ProTheme { stop(at: 5) }
+    var _350: ProTheme { stop(at: 6) }
+    var _400: ProTheme { stop(at: 7) }
+    var _450: ProTheme { stop(at: 8) }
+    var _500: ProTheme { stop(at: 9) }
+    var _550: ProTheme { stop(at: 10) }
+    var _600: ProTheme { stop(at: 11) }
+    var _650: ProTheme { stop(at: 12) }
+    var _700: ProTheme { stop(at: 13) }
+    var _750: ProTheme { stop(at: 14) }
+    var _800: ProTheme { stop(at: 15) }
+    var _850: ProTheme { stop(at: 16) }
+    var _900: ProTheme { stop(at: 17) }
+    var _950: ProTheme { stop(at: 18) }
+    var _1000: ProTheme { stop(at: 19) }
 }
 
-private extension ProColor {
+private extension ProTheme {
     var ramp: [OKLCHColor] {
         ColorRampGenerator.shared.getOKLCHColorRamp(forHue: rampHue, isGrayscale: isGrayscale)
     }
 
-    func stop(at index: Int) -> ProColor {
-        ProColor(oklch: ramp[index], rampHue: rampHue, isGrayscale: isGrayscale)
+    func stop(at index: Int) -> ProTheme {
+        ProTheme(oklch: ramp[index], rampHue: rampHue, isGrayscale: isGrayscale)
     }
 }
 
 // MARK: - Factory
 
-public extension ProColor {
-    /// A family from a hex color, such as your brand color: `ProColor(hex: "#00B386")`.
+public extension ProTheme {
+    /// A family from a hex color, such as your brand color: `ProTheme(hex: "#00B386")`.
     ///
     /// The color's OKLCH hue gives the ramp, so the stops and tokens match every other family's lightness
     /// and contrast. The color itself stays the family's own color (`toColor()`), even though it usually
-    /// sits between two stops. A gray hex gives the gray family. Same as `ProColor(oklch: OKLCHColor(hex:))`.
+    /// sits between two stops. A gray hex gives the gray family. Same as `ProTheme(oklch: OKLCHColor(hex:))`.
     init(hex: String) {
         self.init(oklch: OKLCHColor(hex: hex))
     }
 
-    /// Creates a primary ProColor for a given hue
-    static func primary(forHue hue: Double, isGrayscale: Bool = false) -> ProColor {
-        ProColor(
+    /// Creates a primary ProTheme for a given hue
+    static func primary(forHue hue: Double, isGrayscale: Bool = false) -> ProTheme {
+        ProTheme(
             oklch: OKLCHColor.getPrimaryColor(forHue: hue, isGrayscale: isGrayscale),
             rampHue: hue,
             isGrayscale: isGrayscale
@@ -125,9 +129,9 @@ public extension ProColor {
 
 // MARK: - Contrast
 
-public extension ProColor {
+public extension ProTheme {
     /// Contrast ratio between two ProColors
-    func contrastRatio(to other: ProColor, method: ContrastMethod = .wcag2) -> CGFloat {
+    func contrastRatio(to other: ProTheme, method: ContrastMethod = .wcag2) -> CGFloat {
         toRGB().contrastRatio(to: other.toRGB(), method: method)
     }
 }
