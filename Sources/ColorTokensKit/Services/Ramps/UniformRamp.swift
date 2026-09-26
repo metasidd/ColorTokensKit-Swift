@@ -2,10 +2,9 @@
 //  UniformRamp.swift
 //  ColorTokensKit
 //
-//  Every hue shares one lightness and one chroma per stop. Lightness is
-//  CIELab L* (so WCAG contrast is the same for every hue at a stop); chroma and hue
-//  are OKLCH, and hue is constant along a ramp. A hue that can't reach a stop's
-//  chroma in sRGB gets as close as it can.
+//  Every hue shares one lightness per stop, and gets as much chroma as sRGB can show
+//  there. Lightness is CIELab L* (so WCAG contrast is the same for every hue at a stop);
+//  chroma and hue are OKLCH, and hue is constant along a ramp.
 //
 
 import Foundation
@@ -17,30 +16,30 @@ enum UniformRamp {
         53.5, 48.8, 44.0, 39.2, 34.4, 29.5, 24.6, 19.9, 15.0, 10.2,
     ]
 
-    /// OKLCH chroma for _50 … _1000: the most that at least 20 of the 25 named hues can show in sRGB.
-    static let chroma: [Double] = [
-        0.014, 0.029, 0.047, 0.065, 0.085, 0.106, 0.126, 0.141, 0.139, 0.131,
-        0.123, 0.114, 0.106, 0.097, 0.089, 0.080, 0.072, 0.063, 0.055, 0.046,
-    ]
-
-    /// Fraction of the sRGB edge a clamped hue may reach.
+    /// Fraction of the sRGB edge every stop reaches, so 8-bit rounding never pushes a stop outside sRGB.
     static let gamutMargin = 0.98
 
-    static func ramp(hue: Double) -> [LCHColor] {
-        zip(lightness, chroma).map { lightnessStar, targetChroma in
+    /// Each stop is the most vivid color sRGB can show at its lightness and the ramp's hue.
+    /// The stops keep the ramp's exact hue: a stop sits on the sRGB edge, so a hue that drifted even
+    /// 0.01° in a round trip would move a channel by one 8-bit step when a color function rebuilds it.
+    static func oklchRamp(hue: Double) -> [OKLCHColor] {
+        lightness.map { lightnessStar in
             let luminance = Gamut.luminance(lightnessStar: lightnessStar)
-            let chroma = min(targetChroma, gamutMargin * Gamut.maxChroma(luminance: luminance, hue: hue))
+            let chroma = gamutMargin * Gamut.maxChroma(luminance: luminance, hue: hue)
             let oklabLightness = Gamut.lightness(forLuminance: luminance, chroma: chroma, hue: hue)
-            return OKLCHColor(l: oklabLightness, c: chroma, h: hue).toRGB().toLCH()
+            return OKLCHColor(l: oklabLightness, c: chroma, h: hue)
         }
     }
 
-    /// Whether `chroma` is what `ramp(hue:)` gives `hue` at a stop, within `tolerance`: the shared chroma,
-    /// or the gamut limit of a hue that can't reach it. Two gamut checks bracket that limit, which is far
-    /// cheaper than searching for it, and this runs every time a color function draws.
+    /// The same ramp in CIELab LCH, for the LCH API.
+    static func ramp(hue: Double) -> [LCHColor] {
+        oklchRamp(hue: hue).map { $0.toRGB().toLCH() }
+    }
+
+    /// Whether `chroma` is what `ramp(hue:)` gives `hue` at a stop, within `tolerance`: the sRGB limit there.
+    /// Two gamut checks bracket that limit, which is far cheaper than searching for it, and this runs every
+    /// time a color function draws.
     static func isChroma(_ chroma: Double, atStop index: Int, hue: Double, tolerance: Double) -> Bool {
-        if abs(chroma - self.chroma[index]) <= tolerance { return true }
-        guard chroma < self.chroma[index] else { return false }
         let luminance = Gamut.luminance(lightnessStar: lightness[index])
         return Gamut.fits(chroma: (chroma - tolerance) / gamutMargin, luminance: luminance, hue: hue)
             && !Gamut.fits(chroma: (chroma + tolerance) / gamutMargin, luminance: luminance, hue: hue)

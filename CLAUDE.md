@@ -34,7 +34,7 @@ Hand-tuned LCH color stops for base hues (gray, pink, red, orange, etc.). Each p
 
 ### Color ramp generation (`Sources/ColorTokensKit/Services/Ramps/`)
 
-`ColorRampGenerator.getColorRamp(forHue:steps:isGrayscale:)` is the core engine. The hue is an OKLCH hue. `UniformRamp.ramp(hue:)` builds 20 stops (lightest to darkest) that share one CIELab L* and one OKLCH chroma per stop with every other hue — the two tables live in `UniformRamp`. A hue that can't reach a stop's chroma in sRGB gets as close as it can. Gray comes from the JSON.
+`ColorRampGenerator.getColorRamp(forHue:steps:isGrayscale:)` is the core engine. The hue is an OKLCH hue. `UniformRamp.oklchRamp(hue:)` builds 20 stops (lightest to darkest) that share one CIELab L* per stop with every other hue (the table lives in `UniformRamp`), each at 98% of the most OKLCH chroma sRGB allows at that lightness and hue. The OKLCH ramps come from it directly and keep the exact hue: stops sit on the sRGB edge, so a hue that drifted 0.01° would move a channel by one 8-bit step when a color function rebuilds a stop. Gray comes from the JSON.
 
 Results are cached in a static dictionary keyed by normalized hue + step count.
 
