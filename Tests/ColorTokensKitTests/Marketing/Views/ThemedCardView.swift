@@ -10,7 +10,7 @@ struct ThemedCardView: View {
         let cuteness: Int
         let napsPerDay: Int
         let snackTime: Int  // minutes per day
-        let theme: ProColor
+        let theme: ProTheme
         let emoji: String
     }
     
@@ -114,7 +114,7 @@ struct ThemedCardView: View {
         )
     }
     
-    private func statRow(label: String, value: String, theme: ProColor) -> some View {
+    private func statRow(label: String, value: String, theme: ProTheme) -> some View {
         HStack {
             Text(label)
                 .foregroundColor(theme.foregroundTertiary)

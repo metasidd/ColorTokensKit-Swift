@@ -125,7 +125,7 @@ final class ColorRampTests: XCTestCase {
         let hues = Color.allProHues
         XCTAssertGreaterThan(hues.count, 20, "Should have 20+ pro colors")
 
-        var seen = Set<ProColor>()
+        var seen = Set<ProTheme>()
         for (name, color) in hues {
             XCTAssertFalse(seen.contains(color), "Pro color '\(name)' is a duplicate")
             seen.insert(color)
@@ -137,16 +137,16 @@ final class ColorRampTests: XCTestCase {
         XCTAssertLessThan(gray.c, 0.02, "proGray should have very low chroma, got \(gray.c)")
     }
 
-    // A ProColor is the 450 stop of its ramp, so re-deriving that stop must not move it.
+    // A ProTheme is the 450 stop of its ramp, so re-deriving that stop must not move it.
     // Stops were once rebuilt from the OKLCH hue read as a CIELab hue, and slid ~15°.
-    func testProColorIsItsOwn450Stop() {
+    func testProThemeIsItsOwn450Stop() {
         for (name, color) in Color.allProHues {
             XCTAssertEqual(color._450, color, "\(name)._450 drifted from \(name)")
         }
     }
 
     // Before the fix proCobalt's stops came from the ramp at CIELab ~235, i.e. sky.
-    func testProColorStopsComeFromTheRampAtTheNamedHue() {
+    func testProThemeStopsComeFromTheRampAtTheNamedHue() {
         let ramp = ColorRampGenerator().getOKLCHColorRamp(forHue: 260)
         XCTAssertEqual(Color.proCobalt.allStops.map(\.oklch), ramp)
     }
@@ -195,7 +195,7 @@ final class ColorRampTests: XCTestCase {
 
     // MARK: - The palette's promises
 
-    private var namedHues: [ProColor] {
+    private var namedHues: [ProTheme] {
         Color.allProHues.values.filter { !$0.isGrayscale }
     }
 

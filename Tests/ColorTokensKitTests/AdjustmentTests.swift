@@ -22,7 +22,7 @@ final class AdjustmentTests: XCTestCase {
     // A hue that can't reach a stop's chroma sits near the Display P3 edge, where a hue that drifts by 0.01° moves a
     // channel. So exact landing has to hold in every hue, including a custom one, not only in blue.
     func testFunctionsLandOnExactStopsInEveryHue() {
-        let families = Color.allProHues.values.filter { !$0.isGrayscale } + [ProColor.primary(forHue: 166.99)]
+        let families = Color.allProHues.values.filter { !$0.isGrayscale } + [ProTheme.primary(forHue: 166.99)]
         for family in families {
             XCTAssertEqual(family._600.toColor().lighten().hex(), family._550.toColor().hex(), "\(family.h)° lighten")
             XCTAssertEqual(family._600.toColor().darken(by: 2).hex(), family._700.toColor().hex(), "\(family.h)° darken")
@@ -99,7 +99,7 @@ final class AdjustmentTests: XCTestCase {
     // A rotated palette color is the same stop of another hue's ramp, so it keeps the stop's lightness.
     func testRotatingAPaletteColorLandsOnTheSameStopOfTheNewHue() {
         let rotated = blue._500.toColor().rotateHue(by: .degrees(120))
-        let expected = ProColor.primary(forHue: 250 + 120)._500
+        let expected = ProTheme.primary(forHue: 250 + 120)._500
         XCTAssertEqual(rotated.hex(), expected.toColor().hex())
     }
 

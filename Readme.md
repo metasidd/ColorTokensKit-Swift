@@ -38,7 +38,7 @@ ColorTokensKit fixes this by building on perceptually uniform color spaces (OKLC
 - **Perceptual uniformity** — equal lightness values actually look equally bright
 - **Built-in accessibility** — WCAG 2.x and APCA contrast ratio utilities
 - **Automatic dark mode** — every token resolves to light and dark variants
-- **Theming in one line** — pass any `ProColor` and get a complete, accessible palette
+- **Theming in one line** — pass any `ProTheme` and get a complete, accessible palette
 - **Color functions** — `lighten()`, `soften()`, `saturate()`, `rotateHue(by:)`, `blend(with:)` and `invert()` on any `Color`, correct in light and dark mode
 - **Harmonies** — `complement`, `triad`, `analogous()` and more, balanced by construction
 - **Smooth gradients** — `proGradient()` interpolates in OKLCH, the same as CSS, from colors you pick or from a single color
@@ -116,7 +116,7 @@ In ColorTokensKit, each token maps a semantic role (like "primary background" or
 
 ColorTokensKit generates a 20-stop ramp for any OKLCH hue, from near-white (`_50`) to near-black (`_1000`). Every hue shares the same lightness and the same chroma at each stop. Lightness is CIELab L\*, so a given stop has the same contrast (WCAG) whatever the hue. Chroma is the most that 29 of the 36 named hues can show in Display P3, the gamut of every iPhone since the iPhone 7, so every stop is as vivid as it can be while the hues stay even; the few hues that can't reach it keep 98% of their limit. On an sRGB-only screen, like many external monitors, the system clips these colors, so they look a little less vivid there.
 
-The `ProColor` type wraps these ramps with semantic accessors — `.foregroundPrimary`, `.backgroundSecondary`, `.outlineTertiary` — that automatically resolve to the right stop for light and dark mode.
+The `ProTheme` type wraps these ramps with semantic accessors — `.foregroundPrimary`, `.backgroundSecondary`, `.outlineTertiary` — that automatically resolve to the right stop for light and dark mode. It was called `ProColor` before 3.0; that name still works, and Xcode offers to rename it.
 
 ### What's OKLCH?
 
@@ -147,7 +147,7 @@ https://github.com/metasidd/ColorTokensKit-Swift.git
 ### Setup (3 steps, seriously)
 
 1. `import ColorTokensKit` in your files
-2. Copy [ColorTokens.swift](Tests/ColorTokensKitTests/Marketing/Setup/ColorTokens.swift) into your project, or define your own semantic tokens (it uses `ProColor` under the hood — backed by OKLCH)
+2. Copy [ColorTokens.swift](Tests/ColorTokensKitTests/Marketing/Setup/ColorTokens.swift) into your project, or define your own semantic tokens (it uses `ProTheme` under the hood — backed by OKLCH)
 3. Start using `Color.proBlue.backgroundPrimary`, `Color.foregroundPrimary`, etc.
 
 That's it. You're ready to give your app a fresh coat of paint.
@@ -158,7 +158,7 @@ That's it. You're ready to give your app a fresh coat of paint.
 import ColorTokensKit
 
 extension Color {
-    static let brandColor = ProColor(hex: "#00B386") // Your brand's hex, or a preset like Color.proBlue
+    static let brandColor = ProTheme(hex: "#00B386") // Your brand's hex, or a preset like Color.proBlue
 }
 ```
 
@@ -198,18 +198,18 @@ Color.proPurple      Color.proOrchid      Color.proPlum        Color.proMagenta
 Color.proRose
 ```
 
-Each one is a `ProColor` with 20 stops (`_50` through `_1000`) and the full set of semantic tokens for foreground, background, surface, outline, and their inverted variants.
+Each one is a `ProTheme` with 20 stops (`_50` through `_1000`) and the full set of semantic tokens for foreground, background, surface, outline, and their inverted variants.
 
 ## Theming
 
-This is where it gets fun. Pass any `ProColor` as a theme, and your entire component gets a coherent, accessible color system — for free:
+This is where it gets fun. Pass any `ProTheme` as a theme, and your entire component gets a coherent, accessible color system — for free:
 
 ![Simple Card View](/Assets/simple-card-view.webp)
 ![Simple Card Dark Mode View](/Assets/simple-card-dark-mode-view.webp)
 
 ```swift
 struct CardView: View {
-    let theme: ProColor
+    let theme: ProTheme
 
     var body: some View {
         VStack {
@@ -236,7 +236,7 @@ CardView(theme: .primary(forHue: 173)) // Any custom hue
 
 ## Semantic Tokens
 
-Every `ProColor` provides these semantic tokens, each resolving to light/dark mode automatically:
+Every `ProTheme` provides these semantic tokens, each resolving to light/dark mode automatically:
 
 | Category | Tokens |
 |----------|--------|
@@ -325,7 +325,7 @@ accent.analogous(count: 5, spread: .degrees(15))
 accent.harmony(.splitComplement(spread: .degrees(20)))   // chosen at runtime
 ```
 
-The same harmonies work on a whole `ProColor` family and return families, so you can take any token of the related hue. Both routes give the same color:
+The same harmonies work on a whole `ProTheme` family and return families, so you can take any token of the related hue. Both routes give the same color:
 
 ```swift
 Color.proBlue.complement.backgroundSecondary   // the family route
@@ -374,7 +374,7 @@ What you get:
 | `.sheen` | A band of color, clear at both ends | A shine across a button (use white) |
 | `.edgeHighlight` | Strongest in the middle, faint at the ends | Borders and rims |
 
-From colors you choose, any array of `Color` or `ProColor`, harmonies included:
+From colors you choose, any array of `Color` or `ProTheme`, harmonies included:
 
 ```swift
 .background([theme.surfaceTertiary, theme.surfaceSecondary].proGradient())   // top → bottom
@@ -486,7 +486,7 @@ let midLCH = c.lerp(d, t: 0.5)
 For the curious, here's how the types connect:
 
 ```
-ProColor (a color family: ramps, stops, tokens, harmonies; backed by OKLCH)
+ProTheme (a color family: ramps, stops, tokens, harmonies; backed by OKLCH)
   |-- OKLCHColor <-> OKLabColor <-> RGBColor <-> Color
   |-- LCHColor   <-> LABColor   <-> XYZColor <-> RGBColor
 
@@ -494,7 +494,7 @@ Color (any SwiftUI color)
   |-- Adjustments, Harmonies, Gradients: worked out per appearance when drawn
 ```
 
-- **ProColor** — the recommended type for design tokens. Wraps OKLCH internally, so we can evolve the internals without breaking your code.
+- **ProTheme** — the recommended type for design tokens. Wraps OKLCH internally, so we can evolve the internals without breaking your code.
 - **OKLCHColor / OKLabColor** — OKLCH polar and OKLab cartesian forms (Ottosson's reference).
 - **LCHColor / LABColor / XYZColor** — CIELab color spaces.
 - **RGBColor** — extended sRGB, bridges to/from SwiftUI `Color`. Display P3 colors have channels below 0 or above 1.

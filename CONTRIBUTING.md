@@ -28,11 +28,11 @@ done
 
 | Folder | What's in it |
 |--------|--------------|
-| `Sources/ColorTokensKit/ProColor/` | `ProColor`: a color family and its stops and tokens |
+| `Sources/ColorTokensKit/ProTheme/` | `ProTheme`: a color family and its stops and tokens |
 | `Sources/ColorTokensKit/ColorSpace/` | Color types (RGB, LCH, OKLCH, OKLab, …) and conversions |
 | `Sources/ColorTokensKit/Services/Ramps/` | Ramp generation (`UniformRamp`, `ColorRampGenerator`, gray is listed there) and the shared math: `Gamut`, `StopLadder`, `PaletteStop` |
 | `Sources/ColorTokensKit/Adjustments/` | `lighten`, `soften`, `saturate`, `blend`, `invert`, … on `Color` |
-| `Sources/ColorTokensKit/Harmonies/` | `complement`, `triad`, `analogous`, … on `Color` and `ProColor` |
+| `Sources/ColorTokensKit/Harmonies/` | `complement`, `triad`, `analogous`, … on `Color` and `ProTheme` |
 | `Sources/ColorTokensKit/Gradients/` | `proGradient` and friends, blends, easing, recipes |
 | `Sources/ColorTokensKit/Platform/` | SwiftUI, UIKit and AppKit glue, including `Color.adapting` |
 | `Tests/ColorTokensKitTests/` | Tests; `Support/` has helpers; `Marketing/` renders the README images |

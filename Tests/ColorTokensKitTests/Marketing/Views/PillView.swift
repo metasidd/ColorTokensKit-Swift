@@ -17,7 +17,7 @@ struct PillView: View {
         ("Black", .black)
     ]
     
-    private var colorRamps: [(name: String, color: ProColor)] {
+    private var colorRamps: [(name: String, color: ProTheme)] {
         Color.allProHues.map { (name: $0.key, color: $0.value) }
             .sorted { lhs, rhs in
                 if lhs.name == "Gray" { return true }
@@ -96,7 +96,7 @@ struct PillView: View {
             .clipShape(Capsule())
     }
     
-    private func makeThemedPill(text: String, theme: ProColor) -> some View {
+    private func makeThemedPill(text: String, theme: ProTheme) -> some View {
         Text(text)
             .font(.title)
             .foregroundColor(theme.foregroundSecondary)

@@ -85,7 +85,7 @@ public extension Color {
     static var outlineTertiary: Color { Color.proGray.outlineTertiary }
 }
 
-public extension ProColor {
+public extension ProTheme {
     // MARK: - Foreground colors
 
     /// Used for primary text, selected icons, etc.

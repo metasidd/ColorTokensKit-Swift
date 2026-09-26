@@ -7,7 +7,7 @@
 //  harmony of a palette color is balanced by construction: same contrast, and the
 //  same vividness wherever Display P3 allows.
 //
-//  This type is the single definition of each harmony. Color and ProColor both
+//  This type is the single definition of each harmony. Color and ProTheme both
 //  read it, which is why `color.triad` and `family.triad` always agree.
 //
 
@@ -16,7 +16,7 @@ import SwiftUI
 /// A set of hues that work together, as offsets around the OKLCH hue wheel from one color.
 ///
 /// Every color keeps the original's lightness, so a harmony of palette colors shares their contrast.
-/// Pass one to `harmony(_:)` on a `Color` or `ProColor` when the harmony is chosen at runtime:
+/// Pass one to `harmony(_:)` on a `Color` or `ProTheme` when the harmony is chosen at runtime:
 ///
 /// ```swift
 /// brand.harmony(.splitComplement(spread: .degrees(20)))

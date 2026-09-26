@@ -167,7 +167,7 @@ extension OKLCHColor {
     }
 
     /// Chroma this low has no visible hue; such colors use the gray ramp. This is the one gray test:
-    /// `ProColor` uses it too, so a family and its colors agree on what is gray.
+    /// `ProTheme` uses it too, so a family and its colors agree on what is gray.
     var isAchromatic: Bool {
         c <= 0.005
     }
