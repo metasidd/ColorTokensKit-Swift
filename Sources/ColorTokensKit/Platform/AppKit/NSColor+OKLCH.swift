@@ -18,10 +18,11 @@ extension OKLCHColor {
 }
 
 extension NSColor {
-    /// An sRGB NSColor for an OKLCH color.
+    /// An extended sRGB NSColor for an OKLCH color, which keeps Display P3 colors intact. `NSColor(srgbRed:)`
+    /// would tag it plain sRGB, and AppKit clips such a color to 0…1 when it converts it.
     convenience init(_ color: OKLCHColor) {
         let rgb = color.toRGB()
-        self.init(srgbRed: rgb.r, green: rgb.g, blue: rgb.b, alpha: rgb.alpha)
+        self.init(colorSpace: .extendedSRGB, components: [rgb.r, rgb.g, rgb.b, rgb.alpha], count: 4)
     }
 }
 

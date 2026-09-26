@@ -95,10 +95,13 @@ public struct MarketingAssets {
 		do {
 			let someView = view.frame(width: size.width, height: size.height)
 			let renderer = ImageRenderer(content: someView)
+			// Render in extended range and save as Display P3, so the palette's P3 colors aren't clipped to sRGB.
+			renderer.colorMode = .extendedLinear
 			let ciContext = CIContext()
 			let ciImage = CIImage(cgImage: renderer.cgImage!)
 			let destinationPath = directory.appendingPathComponent("\(name).png")
-			try ciContext.writePNGRepresentation(of: ciImage, to: destinationPath , format: .RGBA8, colorSpace: ciImage.colorSpace!)
+			let displayP3 = CGColorSpace(name: CGColorSpace.displayP3)!
+			try ciContext.writePNGRepresentation(of: ciImage, to: destinationPath, format: .RGBA8, colorSpace: displayP3)
 		} catch {
 			logger.error("Failed to save \(name) image: \(error.localizedDescription)")
 		}

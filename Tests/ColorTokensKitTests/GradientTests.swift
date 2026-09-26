@@ -34,15 +34,17 @@ final class GradientTests: XCTestCase {
     // SwiftUI's default blue → yellow gradient meets at #6cabc7, so `.direct` must meet there too.
     func testDirectMatchesSwiftUIsOwnGradient() {
         let middle = GradientStops.interpolate(blue.resolvedOKLCH(for: .light), yellow.resolvedOKLCH(for: .light), at: 0.5, blend: .direct)
-        XCTAssertEqual(middle.hex, "#6cabc7")
+        XCTAssertEqual(middle.sRGBHex, "#6cabc7")
     }
 
     // `.rainbow` exists to take the other way around: red → gold must pass blue, not orange, or choosing it does nothing.
+    // Halfway the long way is 230°. Stops this vivid meet outside sRGB there, and CSS Color 4 mapping can turn the hue a
+    // few degrees as it pulls the color in, so the check allows that and still rules out orange.
     func testRainbowGoesTheLongWayRound() {
-        let red = Color.proRed._500.toColor().resolvedOKLCH(for: .light) // hue 24°
-        let gold = Color.proGold._500.toColor().resolvedOKLCH(for: .light) // hue 78°
-        XCTAssertEqual(Double(GradientStops.interpolate(red, gold, at: 0.5, blend: .vivid).h), 51, accuracy: 2)
-        XCTAssertEqual(Double(GradientStops.interpolate(red, gold, at: 0.5, blend: .rainbow).h), 231, accuracy: 2)
+        let red = Color.proRed._500.toColor().resolvedOKLCH(for: .light) // hue 20°
+        let gold = Color.proGold._500.toColor().resolvedOKLCH(for: .light) // hue 80°
+        XCTAssertEqual(Double(GradientStops.interpolate(red, gold, at: 0.5, blend: .vivid).h), 50, accuracy: 2)
+        XCTAssertEqual(Double(GradientStops.interpolate(red, gold, at: 0.5, blend: .rainbow).h), 230, accuracy: 6)
     }
 
     // MARK: - Easing

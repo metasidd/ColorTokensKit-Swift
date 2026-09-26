@@ -177,16 +177,18 @@ final class OKLabTests: XCTestCase {
         XCTAssertGreaterThan(oklch.l, 0, "Blue should have some lightness")
     }
 
-    // MARK: - Gamut Clamping
+    // MARK: - Gamut mapping
 
-    func testOutOfGamutOKLCHClampsRGB() {
+    // Conversion keeps colors beyond sRGB, because the palette is Display P3, so bringing a color onto the screen is
+    // the gamut mapper's job. A color beyond even Display P3 has to come back inside it, or the screen would clip it.
+    func testGamutMappingBringsColorsInsideDisplayP3() {
         let extreme = OKLCHColor(l: 0.5, c: 0.4, h: 270)
-        let rgb = extreme.toRGB()
-        XCTAssertGreaterThanOrEqual(rgb.r, 0)
-        XCTAssertLessThanOrEqual(rgb.r, 1)
-        XCTAssertGreaterThanOrEqual(rgb.g, 0)
-        XCTAssertLessThanOrEqual(rgb.g, 1)
-        XCTAssertGreaterThanOrEqual(rgb.b, 0)
-        XCTAssertLessThanOrEqual(rgb.b, 1)
+        XCTAssertFalse(Gamut.contains(lightness: 0.5, chroma: 0.4, hue: 270), "The example must be beyond Display P3")
+        let mapped = Gamut.fitted(extreme)
+        let (r, g, b) = Gamut.linearSRGB(lightness: Double(mapped.l), chroma: Double(mapped.c), hue: Double(mapped.h))
+        let (pr, pg, pb) = Gamut.linearDisplayP3(r, g, b)
+        for channel in [pr, pg, pb] {
+            XCTAssertTrue(channel >= -0.0001 && channel <= 1.0001, "Display P3 channel \(channel)")
+        }
     }
 }
