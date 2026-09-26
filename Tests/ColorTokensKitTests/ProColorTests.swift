@@ -11,8 +11,9 @@ final class ProColorTests: XCTestCase {
     }
 
     // The family's own color is the brand color itself, so `brand.toColor()` draws exactly what the brand guide says.
+    // A brand hex is sRGB, so the check is in sRGB.
     func testHexFamilyKeepsTheHexAsItsOwnColor() {
-        XCTAssertEqual(ProColor(hex: "#00B386").toColor().hex(), "#00b386")
+        XCTAssertEqual(ProColor(hex: "#00B386").toColor().resolvedOKLCH(for: .light).sRGBHex, "#00b386")
     }
 
     // A gray has no meaningful hue: its hue number is noise, which primary(forHue:) turns into a colorful ramp.
