@@ -158,11 +158,11 @@ That's it. You're ready to give your app a fresh coat of paint.
 import ColorTokensKit
 
 extension Color {
-    static var brandColor: ProColor {
-        .primary(forHue: 210) // Any OKLCH hue 0-360, or use a preset like Color.proBlue
-    }
+    static let brandColor = ProColor(hex: "#00B386") // Your brand's hex, or a preset like Color.proBlue
 }
 ```
+
+The family takes your hex's hue at the palette's lightness for every stop, so it has the same contrast as the built-in families. `brandColor.toColor()` is your exact hex. You can also start from an OKLCH hue: `.primary(forHue: 210)`.
 
 Now use it everywhere — backgrounds, text, outlines — with automatic dark mode:
 
