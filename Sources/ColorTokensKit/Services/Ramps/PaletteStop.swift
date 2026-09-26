@@ -3,8 +3,9 @@
 //  ColorTokensKit
 //
 //  A color that sits exactly on a ColorTokensKit ramp: its hue plus its stop.
-//  Because every chromatic ramp shares one lightness and one chroma per stop, a
-//  color's lightness says which stop it is and its hue says which ramp. Color
+//  Because every chromatic ramp shares one lightness per stop, and each stop's
+//  chroma is the sRGB limit at its hue, a color's lightness says which stop it is
+//  and its hue says which ramp. Color
 //  functions use this to move palette colors stop by stop, so their results are
 //  real palette colors and contrast stays predictable.
 //

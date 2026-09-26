@@ -114,7 +114,7 @@ In ColorTokensKit, each token maps a semantic role (like "primary background" or
 
 ## How It Works
 
-ColorTokensKit generates a 20-stop ramp for any OKLCH hue, from near-white (`_50`) to near-black (`_1000`). Every hue shares the same lightness and chroma at each stop. Lightness is CIELab L\*, so a given stop has the same contrast (WCAG) whatever the hue; chroma is the most that nearly every hue can show in sRGB, and a hue that can't reach it gets as close as it can.
+ColorTokensKit generates a 20-stop ramp for any OKLCH hue, from near-white (`_50`) to near-black (`_1000`). Every hue shares the same lightness at each stop. Lightness is CIELab L\*, so a given stop has the same contrast (WCAG) whatever the hue. Chroma is the most each hue can show in sRGB at that lightness, so every stop is as vivid as the screen allows at its contrast.
 
 The `ProColor` type wraps these ramps with semantic accessors — `.foregroundPrimary`, `.backgroundSecondary`, `.outlineTertiary` — that automatically resolve to the right stop for light and dark mode.
 
@@ -495,7 +495,7 @@ Color (any SwiftUI color)
 - **OKLCHColor / OKLabColor** — OKLCH polar and OKLab cartesian forms (Ottosson's reference).
 - **LCHColor / LABColor / XYZColor** — CIELab color spaces.
 - **RGBColor** — sRGB, bridges to/from SwiftUI `Color`.
-- **ColorRampGenerator** — builds and caches 20-stop ramps: `UniformRamp` for hues (one lightness and one chroma per stop, shared by every hue), the palette data for gray.
+- **ColorRampGenerator** — builds and caches 20-stop ramps: `UniformRamp` for hues (one lightness per stop, shared by every hue, and the most chroma sRGB allows), the palette data for gray.
 - **Adjustments, Harmonies, Gradients** — the color functions. Each returns a `Color` that is worked out when drawn, for the current appearance (`Color+Adaptive`).
 - **Gamut, StopLadder, PaletteStop** — shared math: fitting colors into sRGB, the lightness of each stop, and recognizing palette colors so they move stop by stop.
 

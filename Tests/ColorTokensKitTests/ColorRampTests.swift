@@ -192,4 +192,31 @@ final class ColorRampTests: XCTestCase {
                 "Stop \(i) hue \(color.h) should be in [0, 360)")
         }
     }
+
+    // MARK: - The palette's promises
+
+    private var namedHues: [ProColor] {
+        Color.allProHues.values.filter { !$0.isGrayscale }
+    }
+
+    // Every hue shares one lightness per stop, so a stop has the same contrast in every hue: swapping a
+    // theme's family never changes whether its text passes.
+    func testEveryHueHasTheSameContrastAtAStop() {
+        for index in 0..<ColorConstants.rampStops {
+            let ratios = namedHues.map { $0.allStops[index].toColor().contrastRatio(to: .white) }
+            XCTAssertLessThan(ratios.max()! - ratios.min()!, 0.02, "Stop \(index) contrast on white varies: \(ratios.min()!) to \(ratios.max()!)")
+        }
+    }
+
+    // Every stop is as vivid as sRGB can show at its lightness, less the margin that keeps 8-bit rounding inside
+    // sRGB. If this drops, the palette gets duller than the screen allows for no gain in contrast.
+    func testEveryStopIsAsVividAsSRGBAllows() {
+        for family in namedHues {
+            for (index, stop) in family.allStops.enumerated() {
+                let luminance = Gamut.luminance(lightnessStar: UniformRamp.lightness[index])
+                let most = Gamut.maxChroma(luminance: luminance, hue: Double(stop.h))
+                XCTAssertEqual(Double(stop.c), UniformRamp.gamutMargin * most, accuracy: 0.002, "\(family.h)° stop \(index)")
+            }
+        }
+    }
 }

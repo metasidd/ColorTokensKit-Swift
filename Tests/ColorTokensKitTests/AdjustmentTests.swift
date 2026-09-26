@@ -19,6 +19,17 @@ final class AdjustmentTests: XCTestCase {
         XCTAssertEqual(blue._600.toColor().darken(by: 2).hex(), blue._700.toColor().hex())
     }
 
+    // Stops sit on the sRGB edge, where a hue that drifts by 0.01° moves a channel by one 8-bit step. So exact
+    // landing has to hold in every hue, including a custom one, not only in blue.
+    func testFunctionsLandOnExactStopsInEveryHue() {
+        let families = Color.allProHues.values.filter { !$0.isGrayscale } + [ProColor.primary(forHue: 166.99)]
+        for family in families {
+            XCTAssertEqual(family._600.toColor().lighten().hex(), family._550.toColor().hex(), "\(family.h)° lighten")
+            XCTAssertEqual(family._600.toColor().darken(by: 2).hex(), family._700.toColor().hex(), "\(family.h)° darken")
+            XCTAssertEqual(family._200.toColor().invert().hex(), family._850.toColor().hex(), "\(family.h)° invert")
+        }
+    }
+
     // A token is two colors. An adjustment has to apply to each appearance, or dark mode breaks.
     func testAdjustmentsApplyInLightAndDarkMode() {
         let lighter = token.lighten()

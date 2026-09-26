@@ -3,7 +3,7 @@
 // ColorTokensKit
 //
 // Builds and caches 20-stop ramps. Chromatic ramps are keyed by OKLCH hue and
-// built by UniformRamp (shared lightness and chroma per stop); gray is listed
+// built by UniformRamp (shared lightness per stop, the most chroma sRGB allows); gray is listed
 // at the end of this file.
 //
 
@@ -69,7 +69,10 @@ public class ColorRampGenerator {
         }
         ColorRampGenerator.cacheLock.unlock()
 
-        let result = getColorRamp(forHue: targetHue, steps: steps, isGrayscale: isGrayscale).map { $0.toRGB().toOKLCH() }
+        // Chromatic stops come straight from UniformRamp, so they keep the ramp's exact hue.
+        let result = isGrayscale || steps != ColorConstants.rampStops
+            ? getColorRamp(forHue: targetHue, steps: steps, isGrayscale: isGrayscale).map { $0.toRGB().toOKLCH() }
+            : UniformRamp.oklchRamp(hue: normalizedTargetHue)
 
         ColorRampGenerator.cacheLock.lock()
         ColorRampGenerator.oklchInterpolatedRamps[cacheKey] = result
