@@ -20,7 +20,7 @@ public struct ProColor: Hashable, Sendable {
     let isGrayscale: Bool
 
     public init(oklch: OKLCHColor) {
-        self.init(oklch: oklch, rampHue: Double(oklch.h), isGrayscale: oklch.c <= 0.005)
+        self.init(oklch: oklch, rampHue: Double(oklch.h), isGrayscale: oklch.isAchromatic)
     }
 
     init(oklch: OKLCHColor, rampHue: Double, isGrayscale: Bool) {

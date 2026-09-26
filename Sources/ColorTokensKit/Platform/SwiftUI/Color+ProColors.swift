@@ -16,7 +16,7 @@ import Foundation
 import SwiftUI
 
 public extension Color {
-    // OKLCH hues. Each name sits at (or, where neighbours crowd it, near) the median hue
+    // OKLCH hues. Each name sits at (or, where neighbors crowd it, near) the median hue
     // that Radix, Tailwind, Material, Open Color, Ant, Carbon, Apple, CSS and the XKCD survey give it.
     // Pro color getters
     static var proGray: ProColor { .primary(forHue: 0, isGrayscale: true) }

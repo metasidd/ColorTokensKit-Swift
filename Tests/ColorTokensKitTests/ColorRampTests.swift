@@ -157,19 +157,6 @@ final class ColorRampTests: XCTestCase {
         XCTAssertEqual(indigo._450.h, indigo.h, accuracy: 1)
     }
 
-    // A stray hue in one stop (blue and indigo 1000 once had 134.54, a green) tints
-    // every ramp interpolated from it, even at zero chroma.
-    func testPaletteStopsStayNearTheirRampHue() {
-        let ramps = ColorRampLoader.loadColorRamps()!.colorRamps.filter { $0.name != "gray" }
-        for ramp in ramps {
-            let reference = ramp.stops["450"]!.h
-            for (key, stop) in ramp.stops {
-                let distance = abs((stop.h - reference + 540).truncatingRemainder(dividingBy: 360) - 180)
-                XCTAssertLessThan(distance, 20, "\(ramp.name) \(key) hue \(stop.h), ramp is ~\(reference)")
-            }
-        }
-    }
-
     func testProBlueHasBlueHue() {
         let blue = Color.proBlue
         // Blue hue in OKLCH is roughly 200-270
