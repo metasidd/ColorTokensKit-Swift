@@ -18,7 +18,7 @@
     }
 
     extension UIColor {
-        /// An sRGB UIColor for an OKLCH color.
+        /// An extended sRGB UIColor for an OKLCH color, which keeps Display P3 colors intact.
         convenience init(_ color: OKLCHColor) {
             let rgb = color.toRGB()
             self.init(red: rgb.r, green: rgb.g, blue: rgb.b, alpha: rgb.alpha)

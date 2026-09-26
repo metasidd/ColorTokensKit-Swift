@@ -58,7 +58,7 @@ public extension Color {
 
     // MARK: - Saturation
 
-    /// A more vivid version: `amount` 0.2 means 20% more chroma, as far as sRGB can show.
+    /// A more vivid version: `amount` 0.2 means 20% more chroma, as far as Display P3 can show.
     /// Gray, white and black have no hue to strengthen, so they come back unchanged.
     ///
     /// ```swift

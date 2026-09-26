@@ -7,15 +7,13 @@ import Foundation
 import SwiftUI
 
 public extension XYZColor {
-    /// Converts to RGB color space
+    /// Converts to extended sRGB: a color beyond sRGB, such as a Display P3 palette color, keeps
+    /// channels below 0 or above 1 instead of being clipped.
     func toRGB() -> RGBColor {
         let r = (x * 3.2404542) + (y * -1.5371385) + (z * -0.4985314)
         let g = (x * -0.9692660) + (y * 1.8760108) + (z * 0.0415560)
         let b = (x * 0.0556434) + (y * -0.2040259) + (z * 1.0572252)
-        let R = min(max(sRGBCompand(r), 0), 1)
-        let G = min(max(sRGBCompand(g), 0), 1)
-        let B = min(max(sRGBCompand(b), 0), 1)
-        return RGBColor(r: R, g: G, b: B, alpha: alpha)
+        return RGBColor(r: sRGBCompand(r), g: sRGBCompand(g), b: sRGBCompand(b), alpha: alpha)
     }
 
     /// Converts to LAB color space

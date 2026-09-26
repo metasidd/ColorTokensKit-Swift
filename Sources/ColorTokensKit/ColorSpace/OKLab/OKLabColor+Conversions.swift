@@ -10,7 +10,8 @@ import Foundation
 import SwiftUI
 
 public extension OKLabColor {
-    /// Converts to linear sRGB then applies gamma for sRGB output
+    /// Converts to extended sRGB: linear sRGB with the sRGB curve applied, not clipped, so a Display P3
+    /// color keeps channels below 0 or above 1.
     func toRGB() -> RGBColor {
         // OKLab → LMS' (inverse M2)
         let lp = l + 0.3963377774 * a + 0.2158037573 * b
@@ -27,12 +28,8 @@ public extension OKLabColor {
         let gLin = -1.2684380046 * lc + 2.6097574011 * mc - 0.3413193965 * sc
         let bLin = -0.0041960863 * lc - 0.7034186147 * mc + 1.7076147010 * sc
 
-        // Linear sRGB → sRGB (gamma companding + clamp)
-        let r = min(max(linearToSRGB(rLin), 0), 1)
-        let g = min(max(linearToSRGB(gLin), 0), 1)
-        let b = min(max(linearToSRGB(bLin), 0), 1)
-
-        return RGBColor(r: r, g: g, b: b, alpha: alpha)
+        // Linear sRGB → sRGB (gamma companding)
+        return RGBColor(r: linearToSRGB(rLin), g: linearToSRGB(gLin), b: linearToSRGB(bLin), alpha: alpha)
     }
 
     /// Converts to OKLCH (polar form)

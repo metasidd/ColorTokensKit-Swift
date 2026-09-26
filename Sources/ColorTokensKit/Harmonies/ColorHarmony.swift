@@ -5,7 +5,7 @@
 //  Color harmonies: sets of hues that work together, measured around the OKLCH hue
 //  wheel. Every color in a harmony keeps the original's lightness, so the
 //  harmony of a palette color is balanced by construction: same contrast, and the
-//  same vividness wherever sRGB allows.
+//  same vividness wherever Display P3 allows.
 //
 //  This type is the single definition of each harmony. Color and ProColor both
 //  read it, which is why `color.triad` and `family.triad` always agree.

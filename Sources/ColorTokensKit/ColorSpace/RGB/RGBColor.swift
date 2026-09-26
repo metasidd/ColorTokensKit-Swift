@@ -7,10 +7,12 @@
 import Foundation
 import SwiftUI
 
+/// An extended sRGB color: channels run 0…1 inside sRGB and go past either end for wider colors, such as the
+/// palette's Display P3 stops. SwiftUI, UIKit and AppKit all draw extended sRGB as is.
 public struct RGBColor: Hashable, Sendable {
-    public let r: CGFloat // 0..1
-    public let g: CGFloat // 0..1
-    public let b: CGFloat // 0..1
+    public let r: CGFloat
+    public let g: CGFloat
+    public let b: CGFloat
     public let alpha: CGFloat // 0..1
 
     public init(r: CGFloat, g: CGFloat, b: CGFloat, alpha: CGFloat) {
@@ -40,7 +42,7 @@ public struct RGBColor: Hashable, Sendable {
                 b = blue
                 self.alpha = alpha
             #elseif canImport(AppKit)
-                guard let convertedColor = NSColor(color).usingColorSpace(.deviceRGB) else {
+                guard let convertedColor = NSColor(color).usingColorSpace(.extendedSRGB) else {
                     r = 0
                     g = 0
                     b = 0

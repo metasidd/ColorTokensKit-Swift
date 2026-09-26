@@ -67,26 +67,14 @@ struct PillView: View {
                 }
                 
                 VStack(spacing: 16) {
-                    let numberOfItemsPerRow = Int(ceil(Double(colorRamps.count) / 3.0))
-                    
-                    HStack(spacing: 16) {
-                        ForEach(colorRamps.prefix(numberOfItemsPerRow), id: \.name) { colorInfo in
-                            makeThemedPill(text: "\(colorInfo.name)",
-                                     theme: colorInfo.color)
-                        }
-                    }
-                    
-                    HStack(spacing: 16) {
-                        ForEach(colorRamps.dropFirst(numberOfItemsPerRow).prefix(numberOfItemsPerRow), id: \.name) { colorInfo in
-                            makeThemedPill(text: "\(colorInfo.name)",
-                                     theme: colorInfo.color)
-                        }
-                    }
-                    
-                    HStack(spacing: 16) {
-                        ForEach(colorRamps.dropFirst(numberOfItemsPerRow * 2), id: \.name) { colorInfo in
-                            makeThemedPill(text: "\(colorInfo.name)",
-                                     theme: colorInfo.color)
+                    // Four rows, so gray and all 36 hues fit the image without breaking a name.
+                    let numberOfItemsPerRow = Int(ceil(Double(colorRamps.count) / 4.0))
+                    ForEach(0..<4, id: \.self) { row in
+                        HStack(spacing: 16) {
+                            ForEach(colorRamps.dropFirst(row * numberOfItemsPerRow).prefix(numberOfItemsPerRow), id: \.name) { colorInfo in
+                                makeThemedPill(text: "\(colorInfo.name)",
+                                               theme: colorInfo.color)
+                            }
                         }
                     }
                 }
@@ -112,7 +100,9 @@ struct PillView: View {
         Text(text)
             .font(.title)
             .foregroundColor(theme.foregroundSecondary)
-            .padding(.horizontal, 32)
+            .lineLimit(1)
+            .fixedSize()
+            .padding(.horizontal, 24)
             .padding(.vertical, 12)
             .background(theme.backgroundSecondary)
             .clipShape(Capsule())

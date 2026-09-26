@@ -74,7 +74,7 @@ The README images are SwiftUI views rendered by the tests.
    PNGs land in `Tests/ColorTokensKitTests/Exports/` (gitignored). Never commit that folder.
 3. Convert only the images that changed to lossless WebP (`brew install webp` provides `cwebp`):
    ```bash
-   cwebp -lossless -z 9 -exact Tests/ColorTokensKitTests/Exports/<name>.png -o Assets/<name>.webp
+   cwebp -lossless -z 9 -exact -metadata icc Tests/ColorTokensKitTests/Exports/<name>.png -o Assets/<name>.webp
    ```
    Lossless WebP is about a third the size of the PNG and keeps every pixel. To confirm, run `magick compare -metric AE <name>.png Assets/<name>.webp null:`, which prints 0 for a lossless file.
 4. Reference it in the README as `![Name](/Assets/<name>.webp)`. In a pull request description, use a raw URL pinned to a commit so it keeps showing what you reviewed: `https://raw.githubusercontent.com/metasidd/ColorTokensKit-Swift/<commit>/Assets/<name>.webp`.

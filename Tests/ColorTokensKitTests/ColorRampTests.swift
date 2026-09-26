@@ -147,7 +147,7 @@ final class ColorRampTests: XCTestCase {
 
     // Before the fix proCobalt's stops came from the ramp at CIELab ~235, i.e. sky.
     func testProColorStopsComeFromTheRampAtTheNamedHue() {
-        let ramp = ColorRampGenerator().getOKLCHColorRamp(forHue: 261)
+        let ramp = ColorRampGenerator().getOKLCHColorRamp(forHue: 260)
         XCTAssertEqual(Color.proCobalt.allStops.map(\.oklch), ramp)
     }
 
@@ -190,6 +190,65 @@ final class ColorRampTests: XCTestCase {
                 "Stop \(i) chroma \(color.c) should be non-negative")
             XCTAssertTrue(color.h >= 0 && color.h < 360,
                 "Stop \(i) hue \(color.h) should be in [0, 360)")
+        }
+    }
+
+    // MARK: - The palette's promises
+
+    private var namedHues: [ProColor] {
+        Color.allProHues.values.filter { !$0.isGrayscale }
+    }
+
+    // Every hue shares one lightness per stop, so a stop has the same contrast in every hue: swapping a
+    // theme's family never changes whether its text passes.
+    func testEveryHueHasTheSameContrastAtAStop() {
+        for index in 0..<ColorConstants.rampStops {
+            let ratios = namedHues.map { $0.allStops[index].toColor().contrastRatio(to: .white) }
+            XCTAssertLessThan(ratios.max()! - ratios.min()!, 0.02, "Stop \(index) contrast on white varies: \(ratios.min()!) to \(ratios.max()!)")
+        }
+    }
+
+    // One chroma per stop, shared by every hue that can reach it, is what keeps a stop looking even: a hue with far
+    // more chroma than the rest looks louder, or brighter in the blues, as the max-chroma experiment showed. So no
+    // hue may exceed its stop's chroma, and at least 29 of the 36 must reach it.
+    func testEveryStopSharesOneChroma() {
+        for index in 0..<ColorConstants.rampStops {
+            let shared = UniformRamp.chroma[index]
+            let chromas = namedHues.map { Double($0.allStops[index].c) }
+            XCTAssertLessThanOrEqual(chromas.max()!, shared + 0.001, "Stop \(index): a hue exceeds the shared chroma")
+            let reaching = chromas.filter { abs($0 - shared) <= 0.001 }.count
+            XCTAssertGreaterThanOrEqual(reaching, 29, "Stop \(index): only \(reaching) of 36 hues reach the shared chroma")
+        }
+    }
+
+    // The shared chroma is as high as that rule allows, so the palette is as vivid as Display P3 lets it be while
+    // staying even. Lower, and colors get duller for nothing; higher, and more hues fall behind the rest.
+    func testTheSharedChromaIsTheMostTheRuleAllows() {
+        for index in 0..<ColorConstants.rampStops {
+            let luminance = Gamut.luminance(lightnessStar: UniformRamp.lightness[index])
+            let reach = namedHues.map { UniformRamp.gamutMargin * Gamut.maxChroma(luminance: luminance, hue: Double($0.h)) }.sorted()
+            // At most 7 of the 36 may fall short, so the eighth-lowest reach sets the stop.
+            XCTAssertLessThanOrEqual(UniformRamp.chroma[index], reach[7], "Stop \(index) is more than 29 hues can reach")
+            XCTAssertGreaterThan(UniformRamp.chroma[index], reach[7] - 0.001, "Stop \(index) could be more vivid")
+        }
+    }
+
+    // iPhone screens show Display P3. A stop outside it would be clipped on screen, which shifts its hue and contrast.
+    func testEveryStopIsInsideDisplayP3() {
+        for family in namedHues {
+            for (index, stop) in family.allStops.enumerated() {
+                XCTAssertTrue(Gamut.contains(lightness: Double(stop.l), chroma: Double(stop.c), hue: Double(stop.h)), "\(family.h)° stop \(index)")
+            }
+        }
+    }
+
+    // Neighbors 10° apart differ by the same amount all the way around the wheel, with no crowded reds and no gap
+    // around cyan.
+    func testNamedHuesAreEvenlySpaced() {
+        let hues = namedHues.map { Double($0.h) }.sorted()
+        XCTAssertEqual(hues.count, 36)
+        for (index, hue) in hues.enumerated() {
+            XCTAssertEqual(hue, Double(index * 10), accuracy: 0.01)
         }
     }
 }

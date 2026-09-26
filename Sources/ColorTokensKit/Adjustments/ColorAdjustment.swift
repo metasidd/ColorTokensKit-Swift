@@ -8,7 +8,7 @@
 //  Lightness and hue changes keep palette colors on the palette: a color that sits
 //  on a ColorTokensKit stop comes back as another exact stop, so contrast stays
 //  predictable. Any other color moves by the same visual step, keeping its hue and
-//  as much of its chroma as sRGB can show.
+//  as much of its chroma as Display P3 can show.
 //
 
 import Foundation
