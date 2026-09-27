@@ -246,7 +246,7 @@ Every `ProTheme` provides these semantic tokens, each resolving to light/dark mo
 | **Inverted Background** | `invertedBackgroundPrimary`, `invertedBackgroundSecondary`, `invertedBackgroundTertiary` |
 | **Surface** | `surfacePrimary` (50% opacity), `surfaceSecondary` (30%), `surfaceTertiary` (10%) |
 | **Inverted Surface** | `invertedSurfacePrimary` (40%), `invertedSurfaceSecondary` (20%) |
-| **Outline** | `outlinePrimary`, `outlineSecondary`, `outlineTertiary` |
+| **Outline** | `outlinePrimary` (edges of controls: 3:1 on every background token), `outlineSecondary` and `outlineTertiary` (decorative dividers and hairlines) |
 
 ## Color Functions
 

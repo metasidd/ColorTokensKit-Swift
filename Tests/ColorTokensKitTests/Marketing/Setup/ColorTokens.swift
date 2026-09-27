@@ -75,13 +75,13 @@ public extension Color {
 
     // MARK: - Outline colors
 
-    /// Used for primary outlines, borders, etc.
+    /// Used for edges people need to see, like fields and checkboxes. 3:1 on every background.
     static var outlinePrimary: Color { Color.proGray.outlinePrimary }
 
-    /// Used for secondary outlines, borders, etc.
+    /// Used for decorative borders and dividers.
     static var outlineSecondary: Color { Color.proGray.outlineSecondary }
 
-    /// Used for tertiary outlines, borders, etc.
+    /// Used for decorative hairlines and subtle borders.
     static var outlineTertiary: Color { Color.proGray.outlineTertiary }
 }
 
@@ -185,17 +185,17 @@ public extension ProTheme {
 
     // MARK: - Outline colors
 
-    /// Used for primary outlines, borders, etc.
+    /// Used for edges people need to see, like fields and checkboxes. 3:1 on every background.
     var outlinePrimary: Color {
-        Color(light: _300.toColor(), dark: _700.toColor())
+        Color(light: _600.toColor(), dark: _350.toColor())
     }
 
-    /// Used for secondary outlines, borders, etc.
+    /// Used for decorative borders and dividers.
     var outlineSecondary: Color {
         Color(light: _200.toColor(), dark: _800.toColor())
     }
 
-    /// Used for tertiary outlines, borders, etc.
+    /// Used for decorative hairlines and subtle borders.
     var outlineTertiary: Color {
         Color(light: _100.toColor(), dark: _900.toColor())
     }

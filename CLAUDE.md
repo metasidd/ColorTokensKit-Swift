@@ -54,7 +54,7 @@ Token definitions live in the test target as a usage example. They map ramp stop
 | `foregroundSecondary` | `_800` | `_200` |
 | `backgroundPrimary` | `_50` | `_1000` |
 | `backgroundSecondary` | `_100` | `_800` |
-| `outlinePrimary` | `_300` | `_700` |
+| `outlinePrimary` | `_600` | `_350` |
 | `surfacePrimary` | `_200 @ 50%` | `_700 @ 50%` |
 
 Full set includes foreground, inverted foreground, background, inverted background, surface, inverted surface, and outline tokens at primary/secondary/tertiary levels.
