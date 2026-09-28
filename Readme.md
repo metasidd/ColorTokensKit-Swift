@@ -1,158 +1,67 @@
 # ColorTokensKit
 
-[![License: MIT](https://cdn.prod.website-files.com/5e0f1144930a8bc8aace526c/65dd9eb5aaca434fac4f1c34_License-MIT-blue.svg)](/LICENSE)
+[![License: MIT](https://cdn.prod.website-files.com/5e0f1144930a8bc8aace526c/65dd9eb5aaca434fac4f1c34_License-MIT-blue.svg)](/MIT-LICENSE.txt)
 
-By designers, for developers.
+**The most complete color system for SwiftUI.** By designers, for everyone, and readable by the AI agent that writes your code.
 
-**Perceptually uniform color tokens for Swift and SwiftUI.** Generate accessible, themeable color ramps from any hue using OKLCH and CIELab LCH. Works on iOS, macOS, tvOS, watchOS, and visionOS.
+📘 **Full documentation: [colortokenskit.com](https://colortokenskit.com)**
 
 ![Cover Image](/Assets/cover-image.webp)
+
+- **740 colors.** 37 themes (36 hues, one every 10° around the color wheel, plus gray) with 20 stops each, in Display P3.
+- **20 semantic tokens per theme** for text, backgrounds, surfaces and outlines. Each one has a light stop and a dark stop, so dark mode works with no extra code.
+- **Contrast you can count on.** Every hue has the same lightness at each stop, so every text token passes WCAG AA on its page background in both modes, and `outlinePrimary` reaches 3:1 on every background.
+- **A theme from your brand color** in one line: `ProTheme(hex: "#00B386")`.
+- **Color functions, harmonies and smooth gradients** that stay correct in light and dark mode.
+- **Docs made for agents too.** Every page on [colortokenskit.com](https://colortokenskit.com) has a markdown version, and [llms.txt](https://colortokenskit.com/llms.txt) lists them all.
+- **Pure Swift.** No dependencies, `Sendable`, and it runs on iOS 16, macOS 13, tvOS 16, watchOS 9 and visionOS 1 or later.
 
 ## A quick taste
 
 ```swift
-// One hue gives you a whole accessible palette, dark mode included
-// (foregroundPrimary and friends come from ColorTokens.swift, see Setup)
-Text("Hello").foregroundStyle(Color.proBlue.foregroundPrimary)
+struct TripCard: View {
+    let theme: ProTheme   // Color.proBlue, or your brand: ProTheme(hex: "#00B386")
 
-// Adjust any color, and it stays right in dark mode
-Text("Subtitle").foregroundStyle(theme.foregroundSecondary.soften())
-
-// Colors that go together, from one color
-let chartColors = brand.foregroundPrimary.triad
-
-// Gradients that stay vivid, from one color or many
-.background(brand.proGradient(.tonal))
-Circle().stroke(brand.triad.proAngularGradient(), lineWidth: 8)
+    var body: some View {
+        VStack(alignment: .leading) {
+            Text("Lisbon")
+                .foregroundStyle(theme.foregroundPrimary)            // dark mode included
+            Text("3 nights from October 12")
+                .foregroundStyle(theme.foregroundSecondary.soften()) // one stop quieter, in both modes
+        }
+        .padding()
+        .background(theme.backgroundSecondary.proGradient())         // a gentle gradient from one color
+    }
+}
 ```
 
-Everything hands back a plain SwiftUI `Color` or gradient, so it drops into code you already have.
+Everything hands back a plain SwiftUI `Color` or gradient, so it drops into code you already have. [Using your first tokens](https://colortokenskit.com/getting-started/first-tokens/) walks through a real screen.
 
-## Why does this exist?
+## Install
 
-Swift's native color system gives you RGB and HSL. That's fine for picking a single color, but the moment you need a *system* of colors — consistent brightness across hues, accessible contrast, dark mode, theming — it falls apart. Two colors with the same "lightness" in RGB can look wildly different to the human eye.
+In Xcode, choose **File > Add Package Dependencies**, paste this URL, and keep the rule at **Up to Next Major Version**:
 
-ColorTokensKit fixes this by building on perceptually uniform color spaces (OKLCH and CIELab LCH). You pick a hue, and we generate an entire palette that just *works*.
-
-- **Thousands of colors from a single hue** — 20-stop ramps generated automatically
-- **Perceptual uniformity** — equal lightness values actually look equally bright
-- **Built-in accessibility** — WCAG 2.x and APCA contrast ratio utilities
-- **Automatic dark mode** — every token resolves to light and dark variants
-- **Theming in one line** — pass any `ProTheme` and get a complete, accessible palette
-- **Color functions** — `lighten()`, `soften()`, `saturate()`, `rotateHue(by:)`, `blend(with:)` and `invert()` on any `Color`, correct in light and dark mode
-- **Harmonies** — `complement`, `triad`, `analogous()` and more, balanced by construction
-- **Smooth gradients** — `proGradient()` interpolates in OKLCH, the same as CSS, from colors you pick or from a single color
-- **OKLCH + CIELab LCH** — two perceptually uniform color spaces, plus RGB, XYZ, LAB, OKLab conversions
-- **Thread-safe and Sendable** — ready for Swift concurrency
-- **Zero dependencies** — pure Swift, SPM only
-
-### Platform Support
-
-| Platform | Minimum Version |
-|----------|----------------|
-| iOS | 16.0+ |
-| macOS | 13.0+ |
-| tvOS | 16.0+ |
-| watchOS | 9.0+ |
-| visionOS | 1.0+ |
-
-> The broader concept of LCH-based design tokens is widely trusted by companies like [Linear](https://linear.app/blog/how-we-redesigned-the-linear-ui), [Slack](https://slack.design/articles/a-new-visual-language-for-slack/), [Stripe](https://stripe.com/blog/accessible-color-systems), [Zapier](https://zapier.com/blog/lch-easier-accessibility-prettier-colors/) and many others.
-
-## The Problem
-
-We've all been here:
-
-```swift
-Text("The Everything Company")
-  .background(Color(hex: "#FA3499"))                    // Please don't do this
-  .background(Color(red: 0.5, green: 0.5, blue: 1.0))  // Messy & unscalable
-  .background(Color.red.secondary)                      // No control, limited to a few colors
-  .background(Color.brandColorBackground)               // Needs many variables, hard to maintain
-  .background(Color.brandColor.backgroundPrimary)       // Semantic, accessible, dark mode, ergonomic
-```
-
-Then the design asks for a quieter subtitle, an accent that goes with it, and a gradient:
-
-```swift
-.foregroundStyle(Color("SubtitleMuted"))                           // another asset: two more hex values
-.foregroundStyle(Color("AccentPairing"))                           // picked by eye, contrast unknown
-.background(LinearGradient(colors: [Color("CardTop"), Color("CardBottom")],
-                           startPoint: .top, endPoint: .bottom))   // two more assets, and it can go gray
-
-.foregroundStyle(theme.foregroundSecondary.soften())               // derived, adapts to dark mode
-.foregroundStyle(theme.foregroundSecondary.complement)             // same lightness, same contrast
-.background(theme.backgroundSecondary.proGradient())               // generated from one color, smooth
-```
-
-## But wait, what are design tokens?
-
-Design tokens are the smallest, atomic decisions in your UI — the building blocks everything else is made of. Think of them as your single source of truth for colors, so you never have to argue about hex values in a PR again.
-
-```
-                         Your Brand Hue (e.g. Blue)
-                                  |
-                                  v
-                    +--------------------------+
-                    |   Color Ramp Generator   |
-                    |  20 stops, light → dark  |
-                    +--------------------------+
-                                  |
-                  +---------------+---------------+
-                  |               |               |
-                  v               v               v
-             _50 (light)    _500 (mid)     _1000 (dark)
-                  |               |               |
-                  v               v               v
-          +-------------+ +-------------+ +-------------+
-          | background  | | foreground  | | outline     |
-          | Primary     | | Secondary   | | Tertiary    |
-          | (light/dark)| | (light/dark)| | (light/dark)|
-          +-------------+ +-------------+ +-------------+
-```
-
-In ColorTokensKit, each token maps a semantic role (like "primary background" or "secondary text") to the right shade for both light and dark mode. Change one hue, and your entire app updates.
-
-## How It Works
-
-ColorTokensKit generates a 20-stop ramp for any OKLCH hue, from near-white (`_50`) to near-black (`_1000`). Every hue shares the same lightness and the same chroma at each stop. Lightness is CIELab L\*, so a given stop has the same contrast (WCAG) whatever the hue. Chroma is the most that 29 of the 36 named hues can show in Display P3, the gamut of every iPhone since the iPhone 7, so every stop is as vivid as it can be while the hues stay even; the few hues that can't reach it keep 98% of their limit. On an sRGB-only screen, like many external monitors, the system clips these colors, so they look a little less vivid there.
-
-The `ProTheme` type wraps these ramps with semantic accessors — `.foregroundPrimary`, `.backgroundSecondary`, `.outlineTertiary` — that automatically resolve to the right stop for light and dark mode. It was called `ProColor` before 3.0; that name still works, and Xcode offers to rename it.
-
-### What's OKLCH?
-
-![Color System Comparison](/Assets/color-system-comparison.webp)
-
-**OKLCH** is Bjorn Ottosson's perceptually uniform color space, and it's what we use under the hood. It fixes CIELab's hue linearity issues — blues stay blue when you adjust chroma, instead of drifting toward purple. It's also what CSS Color Level 4, Tailwind v4, and most modern design tools have adopted.
-
-**CIELab LCH** is the classic perceptually uniform space. Still fully available for conversions and ramp generation if you prefer it.
-
-### LCH Color Grid
-
-![LCH Color Grid](/Assets/color-grid.webp)
-
-### OKLCH Color Grid
-
-![OKLCH Color Grid](/Assets/oklch-color-grid.webp)
-
-## Quick Start
-
-### Installation
-
-Add ColorTokensKit via Swift Package Manager:
-
-```
+```text
 https://github.com/metasidd/ColorTokensKit-Swift.git
 ```
 
-### Setup (3 steps, seriously)
+In a Swift package:
 
-1. `import ColorTokensKit` in your files
-2. Copy [ColorTokens.swift](Tests/ColorTokensKitTests/Marketing/Setup/ColorTokens.swift) into your project, or define your own semantic tokens (it uses `ProTheme` under the hood — backed by OKLCH)
-3. Start using `Color.proBlue.backgroundPrimary`, `Color.foregroundPrimary`, etc.
+```swift
+.package(url: "https://github.com/metasidd/ColorTokensKit-Swift.git", from: "3.0.0"),
+```
 
-That's it. You're ready to give your app a fresh coat of paint.
+Then add `.product(name: "ColorTokensKit", package: "ColorTokensKit-Swift")` to your target.
 
-### Define a Brand Color
+## Set up
+
+1. `import ColorTokensKit` in your files.
+2. Copy [ColorTokens.swift](Tests/ColorTokensKitTests/Marketing/Setup/ColorTokens.swift) into your project. It defines the semantic tokens, and you can edit them for your app.
+3. Use them: `Color.proBlue.backgroundPrimary`, `Color.foregroundPrimary` and the rest.
+
+[Installing ColorTokensKit](https://colortokenskit.com/getting-started/installing/) covers each step, and [replacing your app colors](https://colortokenskit.com/getting-started/replacing-colors/) moves an existing app over one screen at a time.
+
+## Your brand color
 
 ```swift
 import ColorTokensKit
@@ -162,28 +71,11 @@ extension Color {
 }
 ```
 
-The family takes your hex's hue at the palette's lightness for every stop, so it has the same contrast as the built-in families. `brandColor.toColor()` is your exact hex. You can also start from an OKLCH hue: `.primary(forHue: 210)`.
+The theme takes your hex's hue at the palette's lightness for every stop, so it has the same contrast as the built-in themes, and `brandColor.toColor()` is your exact hex. You can also start from any hue with `.primary(forHue: 210)`, or from exact OKLCH numbers. [ProTheme](https://colortokenskit.com/api/protheme/) has every way to make one. `ProTheme` was called `ProColor` before 3.0; the old name still works, and Xcode offers to rename it.
 
-Now use it everywhere — backgrounds, text, outlines — with automatic dark mode:
+## 37 ready-made themes
 
-```swift
-VStack {
-    Text("The Everything Company")
-        .foregroundStyle(Color.brandColor.foregroundPrimary)
-}
-.padding(8)
-.background(Color.brandColor.backgroundPrimary)
-.overlay(
-    RoundedRectangle(cornerRadius: 16)
-        .stroke(Color.brandColor.outlineTertiary, lineWidth: 1)
-)
-```
-
-And voila — dark mode works out of the box. No extra code.
-
-## 37 Built-in Pro Colors
-
-We ship gray and 36 hues so you can get started without choosing anything. The hues sit every 10° around the OKLCH wheel, so neighbors are equally far apart. The 25 names from 2.0 each sit within 5° of where their name points: the median of nine color-naming sources (Radix, Tailwind, Material, Open Color, Ant Design, IBM Carbon, Apple's system colors, CSS named colors and the XKCD color survey). Coral, amber, mustard, chartreuse, emerald, turquoise, cerulean, azure, grape, orchid and rose fill the gaps between them.
+Gray and 36 hues, one every 10° around the OKLCH wheel, so neighbors are equally far apart:
 
 ```swift
 Color.proGray        Color.proPink        Color.proRuby        Color.proRed
@@ -198,11 +90,11 @@ Color.proPurple      Color.proOrchid      Color.proPlum        Color.proMagenta
 Color.proRose
 ```
 
-Each one is a `ProTheme` with 20 stops (`_50` through `_1000`) and the full set of semantic tokens for foreground, background, surface, outline, and their inverted variants.
+Each one is a `ProTheme` with 20 stops (`_50` to `_1000`) and every semantic token. [Ready-made themes](https://colortokenskit.com/api/named-themes/) shows them all, and [what the library offers](https://colortokenskit.com/basics/color-library/) shows every stop.
 
 ## Theming
 
-This is where it gets fun. Pass any `ProTheme` as a theme, and your entire component gets a coherent, accessible color system — for free:
+Pass any `ProTheme` to a view, and the whole component gets a coherent, accessible set of colors:
 
 ![Simple Card View](/Assets/simple-card-view.webp)
 ![Simple Card Dark Mode View](/Assets/simple-card-dark-mode-view.webp)
@@ -226,125 +118,51 @@ struct CardView: View {
     }
 }
 
-// Usage — swap the theme, everything updates
+// Swap the theme, and everything updates
 CardView(theme: Color.proBlue)
 CardView(theme: Color.proGold)
-CardView(theme: .primary(forHue: 173)) // Any custom hue
+CardView(theme: .primary(forHue: 173)) // any hue
 ```
 
 ![Pill View](/Assets/pill-view.webp)
 
-## Semantic Tokens
+[Setting up themes](https://colortokenskit.com/advanced/themes/) covers theming a view, a screen or a whole app, and [components and examples](https://colortokenskit.com/getting-started/components/) has 30 ready-made components to copy.
 
-Every `ProTheme` provides these semantic tokens, each resolving to light/dark mode automatically:
+## Semantic tokens
 
-| Category | Tokens |
-|----------|--------|
+Every `ProTheme` has these tokens, and each resolves to its light or dark stop on its own:
+
+| Kind | Tokens |
+|------|--------|
 | **Foreground** | `foregroundPrimary`, `foregroundSecondary`, `foregroundTertiary` |
-| **Inverted Foreground** | `invertedForegroundPrimary`, `invertedForegroundSecondary`, `invertedForegroundTertiary` |
+| **Inverted foreground** | `invertedForegroundPrimary`, `invertedForegroundSecondary`, `invertedForegroundTertiary` |
 | **Background** | `backgroundPrimary`, `backgroundSecondary`, `backgroundTertiary` |
-| **Inverted Background** | `invertedBackgroundPrimary`, `invertedBackgroundSecondary`, `invertedBackgroundTertiary` |
+| **Inverted background** | `invertedBackgroundPrimary`, `invertedBackgroundSecondary`, `invertedBackgroundTertiary` |
 | **Surface** | `surfacePrimary` (50% opacity), `surfaceSecondary` (30%), `surfaceTertiary` (10%) |
-| **Inverted Surface** | `invertedSurfacePrimary` (40%), `invertedSurfaceSecondary` (20%) |
-| **Outline** | `outlinePrimary` (edges of controls: 3:1 on every background token), `outlineSecondary` and `outlineTertiary` (decorative dividers and hairlines) |
+| **Inverted surface** | `invertedSurfacePrimary` (40%), `invertedSurfaceSecondary` (20%) |
+| **Outline** | `outlinePrimary` (edges of controls: 3:1 on every background), `outlineSecondary` and `outlineTertiary` (decorative dividers and hairlines) |
 
-## Color Functions
+[Understanding semantic tokens](https://colortokenskit.com/getting-started/semantic-tokens/) explains each kind with an annotated example, and [managing dark mode](https://colortokenskit.com/getting-started/dark-mode/) shows how they switch.
 
-**Before:** every variation is another color to pick, twice over for light and dark mode.
+## How it works
 
-```swift
-extension Color {
-    static let subtitle = Color("Subtitle")              // Assets.xcassets: a light hex and a dark hex
-    static let subtitleMuted = Color("SubtitleMuted")    // two more
-    static let subtitleStrong = Color("SubtitleStrong")  // and two more
-}
-```
+ColorTokensKit builds a 20-stop ramp for any OKLCH hue, from near-white (`_50`) to near-black (`_1000`). Every hue shares the same lightness and the same chroma at each stop. Lightness is CIELab L\*, so a stop has the same WCAG contrast whatever the hue. Chroma is the most that 29 of the 36 named hues can show in Display P3, the gamut of every iPhone since the iPhone 7, so the palette is as vivid as it can be while the hues stay even. On an sRGB-only screen, such as many external monitors, the system clips these colors, so they look a little less vivid there.
 
-**After:** derive them. Each one follows the original into dark mode.
+![Color System Comparison](/Assets/color-system-comparison.webp)
 
-```swift
-let subtitle = theme.foregroundSecondary
-subtitle.soften()       // quieter
-subtitle.strengthen()   // stronger
-```
+**OKLCH** is Björn Ottosson's perceptually uniform color space, the one CSS Color 4 and Tailwind v4 use. Blues stay blue as they get lighter, instead of drifting toward purple the way they do in CIELab LCH.
 
-Every function works on any SwiftUI `Color` (a token, a system color, a hex color) and returns a new `Color` that stays correct in light and dark mode.
+Here is the palette itself, with one row per hue. Each column is a stop, and every hue has the same lightness (L) at each stop:
 
-```swift
-theme.foregroundTertiary.lighten()                // one stop lighter, in light and dark mode
-theme.foregroundTertiary.soften()                 // closer to the background: quieter in both modes
-theme.foregroundTertiary.strengthen()             // further from the background: louder in both modes
-badge.saturate()                                  // 20% more vivid
-badge.desaturate(by: 1)                           // gray, at the same lightness (so the same contrast)
-accent.rotateHue(by: .degrees(30))
-accent.blend(with: Color.proPink._500.toColor())  // mixed in OKLab, so it doesn't go muddy
-Color.proBlue._200.toColor().invert()             // _850: same hue, mirrored stop
-```
+![The palette](/Assets/color-grid.webp)
 
-| Function | What it does |
-|----------|--------------|
-| `lighten(by:)`, `darken(by:)` | Moves up or down the palette by whole stops (default 1) |
-| `soften(by:)`, `strengthen(by:)` | Moves toward or away from the background: lighter or darker depending on the appearance |
-| `saturate(by:)`, `desaturate(by:)` | More or less vivid (default 20%); `desaturate(by: 1)` is gray |
-| `rotateHue(by:)` | Turns the hue around the color wheel, keeping lightness |
-| `blend(with:by:)` | Mixes with another color in OKLab (SwiftUI's `mix` needs iOS 18) |
-| `invert()` | The same hue at the mirrored stop, `_200` ↔ `_850` (SwiftUI's `colorInvert()` flips RGB instead) |
+[How the colors were made](https://colortokenskit.com/basics/how-the-colors-were-built/) tells the story with interactive charts, and [under the hood](https://colortokenskit.com/under-the-hood/why-oklch/) has the math.
 
-Lightness and hue changes keep palette colors on the palette: `Color.proBlue._600.toColor().lighten()` is exactly `_550`, so contrast stays predictable. Any other color moves by the same visual step. `saturate`, `desaturate` and `blend` make colors off the palette, on purpose.
-
-## Color Harmonies
-
-**Before:** colors that "go together" are picked by eye, and nobody checks their contrast.
-
-```swift
-let series = [Color(hex: "#4C6EF5"), Color(hex: "#F76707"), Color(hex: "#12B886")]
-```
-
-**After:** ask for them. They share the original's lightness, so they share its contrast too.
-
-```swift
-let series = brand.foregroundPrimary.triad
-```
-
-Related colors come back ready to use, in the same role as the original: the triad of a background is three backgrounds. Every member keeps the original's lightness, so a harmony is balanced by construction. Parameters have defaults, so you only pass them to change something.
-
-```swift
-let accent = theme.foregroundPrimary      // any Color: a token, a stop, a hex color
-
-accent.complement                         // the opposite hue
-accent.triad                              // accent and the two hues a third of the wheel away
-accent.square                             // four hues a quarter of the wheel apart
-accent.tetrad()                           // two complementary pairs, 60° apart
-accent.splitComplement()                  // accent and the hues either side of its complement
-accent.analogous()                        // 3 colors, 30° apart, accent in the middle
-accent.monochromatic()                    // 5 colors of the same hue, light to dark
-accent.tints()                            // 3 lighter, one stop apart
-accent.shades()                           // 3 darker, one stop apart
-
-accent.analogous(count: 5, spread: .degrees(15))
-accent.harmony(.splitComplement(spread: .degrees(20)))   // chosen at runtime
-```
-
-The same harmonies work on a whole `ProTheme` family and return families, so you can take any token of the related hue. Both routes give the same color:
-
-```swift
-Color.proBlue.complement.backgroundSecondary   // the family route
-Color.proBlue.backgroundSecondary.complement   // the color route: the same color
-```
-
-## Smooth Gradients
+## Smooth gradients
 
 ![Smooth Gradients](/Assets/smooth-gradients.webp)
 
-**Before:** every gradient is two or three more colors to pick, plus a start point and an end point, and distant colors meet in a pale middle, or pass through gray with `.device`.
-
-```swift
-LinearGradient(colors: [Color("CardTop"), Color("CardBottom")], startPoint: .top, endPoint: .bottom)
-LinearGradient(colors: [glow, glow.opacity(0)], startPoint: .top, endPoint: .bottom)
-LinearGradient(colors: [.blue, .yellow], startPoint: .leading, endPoint: .trailing)
-```
-
-**After:** generate it from one color, or pass the colors you want. Top to bottom is the default.
+Generate a gradient from one color, or pass the colors you want. Colors travel around the color wheel in OKLCH, so blue to yellow stays vivid instead of passing through gray, and a gradient between tokens is right in both light and dark mode:
 
 ```swift
 card.proGradient()                                               // a touch lighter at the top
@@ -352,167 +170,34 @@ glow.proGradient(.fade)                                          // fades out, k
 [Color.blue, .yellow].proGradient(from: .leading, to: .trailing) // stays vivid all the way across
 ```
 
-What you get:
-
-- **Vivid, or direct.** By default (`.vivid`) colors travel around the color wheel in OKLCH, the space CSS uses for `linear-gradient(in oklch, …)`, so they stay saturated: blue to yellow passes teal and green. `blend: .direct` draws a straight line with no hues in between, which is SwiftUI's own look (its default `.perceptual` gradient measures as exactly this on iOS). `blend: .rainbow` goes the long way around. SwiftUI's `.device` blends in RGB, through gray.
-- **Gentle by default.** Easing uses SwiftUI's `Animation` names. The default, `.smooth`, starts and finishes gently, so a gradient has no hard edge where it meets the colors around it. `.linear`, `.easeIn`, `.easeOut`, `.easeInOut` and `.timingCurve(…)` are there when you want them.
-- **The same everywhere.** ColorTokensKit works out the in-between colors itself, so a gradient looks the same on every OS version. With `easing: .linear` it matches CSS's `linear-gradient(in oklch, …)` on the web.
-- **Drop-in.** You get SwiftUI's own `LinearGradient`, `EllipticalGradient` and `AngularGradient` back, so they go anywhere a gradient goes: `.background`, `.fill`, `.stroke`, `.foregroundStyle` for text and SF Symbols. iOS 16 and up.
-- **From one color.** Recipes turn a single color into a gradient (see the table below), and you can write your own.
-- **Dark mode for free.** A gradient between tokens is right in both appearances.
-- **Clean fades and rings.** A fade to `.clear` keeps its color all the way out, and angular gradients return to their first color, so there's no seam.
-
-![Gradient Recipes](/Assets/gradient-recipes.webp)
-
-| Recipe | What it makes | Good for |
-|--------|---------------|----------|
-| `.subtle` (default) | A touch lighter at the start | Buttons and icons, like SwiftUI's `Color.gradient` |
-| `.fade` | The color fading to transparent | Glows, scrims, soft edges |
-| `.tonal` | Two stops lighter to two stops darker | Depth on cards and headers |
-| `.analogous` | A drift through the neighboring hues | Banners and illustrations |
-| `.wash` | A soft, translucent tint | Card backdrops |
-| `.sheen` | A band of color, clear at both ends | A shine across a button (use white) |
-| `.edgeHighlight` | Strongest in the middle, faint at the ends | Borders and rims |
-
-From colors you choose, any array of `Color` or `ProTheme`, harmonies included:
-
-```swift
-.background([theme.surfaceTertiary, theme.surfaceSecondary].proGradient())   // top → bottom
-.background(brand.analogous().proGradient(from: .leading, to: .trailing))
-.background([glow, .clear].proRadialGradient())                               // fills its view
-Circle().stroke(brand.triad.proAngularGradient(), lineWidth: 8)              // no seam
-[blue, yellow].proGradient(blend: .direct)                                    // a straight line, no green
-[red, orange].proGradient(blend: .rainbow)                                    // the long way around
-[glow, .clear].proGradient(easing: .easeOut)                                  // fades quickly, then lingers
-```
-
-| Blend | Blue → yellow goes | Use it for |
-|-------|--------------------|------------|
-| `.vivid` (default) | Through teal and green, staying saturated | Brand gradients and harmonies |
-| `.direct` | Straight through a paler middle | When no other hues should appear |
-| `.rainbow` | The long way: through purple, red and orange | Rainbow sweeps |
-
-Easing sets where along the gradient the colors change. The default, `.smooth`, lingers a little at both ends:
-
-![Gradient Easing](/Assets/gradient-easing.webp)
-
-From a single color, with a recipe:
-
-```swift
-accent.proGradient()               // .subtle: a touch lighter at the top
-tinge.proGradient(.fade)           // to transparent, keeping its color
-brand.proGradient(.tonal)          // two stops lighter to two stops darker
-brand.proGradient(.analogous)      // a neighboring hue, through brand, to the other
-card.proGradient(.wash)            // a soft, translucent tint
-Color.white.proGradient(.sheen, from: .topLeading, to: .bottomTrailing)
-rim.proGradient(.edgeHighlight, from: .leading, to: .trailing)
-
-// Or your own
-extension ProGradient.Recipe {
-    static var deepen: Self { Self { [$0, $0.darken(by: 4)] } }
-}
-brand.proGradient(.deepen)
-```
-
-Gradients between tokens stay correct in light and dark mode, and a fade to `.clear` keeps its color instead of drifting toward black.
+[Gradient theory](https://colortokenskit.com/advanced/gradient-theory/) explains the blends, [`.proGradient()`](https://colortokenskit.com/api/pro-gradient/) covers easing and every option, and [ProGradient recipes](https://colortokenskit.com/api/gradient-recipes/) makes gradients from a single color.
 
 ## Accessibility
 
-### Contrast Ratios
-
-Making sure your colors are accessible shouldn't require a separate tool. Check WCAG 2.x or APCA contrast right in your code:
+Contrast is built in: every stop has the same lightness in every hue, so swapping a theme never breaks contrast. You can also check contrast in code with WCAG 2.x or APCA:
 
 ```swift
-let bg = RGBColor(r: 1, g: 1, b: 1, alpha: 1)
+let background = RGBColor(r: 1, g: 1, b: 1, alpha: 1)
 let text = RGBColor(r: 0.1, g: 0.1, b: 0.1, alpha: 1)
 
-// WCAG 2.x (range 1-21, higher is better)
-let wcag = bg.contrastRatio(to: text) // ~18.4 — passes AAA
-
-// APCA (signed Lc value, positive = dark on light)
-let apca = bg.contrastRatio(to: text, method: .apca) // ~106 — passes for all text sizes
-
-// Works on any color type
-let ratio = Color.white.contrastRatio(to: Color.black) // 21.0
+background.contrastRatio(to: text)                  // about 17.5 (WCAG 2, range 1 to 21)
+background.contrastRatio(to: text, method: .apca)   // about 104 (APCA Lc, positive for dark on light)
+Color.white.contrastRatio(to: Color.black)          // 21.0
 ```
 
-## Color Space Conversions
+[How accessible is it?](https://colortokenskit.com/basics/how-accessible/) lists what's guaranteed, [`.contrastRatio(to:method:)`](https://colortokenskit.com/api/contrast-ratio/) covers checking pairs in tests, and [high contrast modes](https://colortokenskit.com/advanced/high-contrast/) handles Increase Contrast.
 
-Need to drop down to raw color values? Convert freely between RGB, LCH, OKLCH, OKLab, LAB, XYZ, HEX, and HSL:
+## More in the docs
 
-```swift
-// HEX
-let color = Color(hex: "#abcdef")
+- **Color functions:** `lighten`, `darken`, `soften`, `strengthen`, `saturate`, `desaturate`, `rotateHue`, `blend` and `invert` on any `Color`, correct in both modes. Start with [`.lighten(by:)`](https://colortokenskit.com/api/lighten/) or [building for interaction states](https://colortokenskit.com/getting-started/interaction-states/).
+- **Harmonies:** `complement`, `triad`, `analogous()`, `tints()` and more, at the same lightness as the original. See [color theory](https://colortokenskit.com/advanced/color-theory/) and [`.triad`](https://colortokenskit.com/api/triad/).
+- **Charts:** series colors that keep their contrast. See [using tokens in charts](https://colortokenskit.com/advanced/charts/).
+- **Conversions and interpolation:** RGB, OKLCH, OKLab, CIELab, LCH, XYZ and hex. See [`.toOKLCH()`](https://colortokenskit.com/api/to-oklch/), [`Color(hex:)`](https://colortokenskit.com/api/color-hex/) and [`.lerp(_:t:)`](https://colortokenskit.com/api/lerp/).
+- **UIKit, AppKit, watchOS and visionOS:** see [platforms](https://colortokenskit.com/platforms/uikit/).
+- **Architecture:** how the ramps are built and fitted into Display P3, in [under the hood](https://colortokenskit.com/under-the-hood/how-ramps-are-built/). [CLAUDE.md](CLAUDE.md) maps the code.
+- **Something not working?** See [troubleshooting](https://colortokenskit.com/reference/troubleshooting/) and the [changelog](https://colortokenskit.com/reference/changelog/).
 
-// HSL
-let hslColor = Color(h: 50, s: 0.5, l: 0.5)
-
-// OKLCH
-let oklch = OKLCHColor(l: 0.7, c: 0.15, h: 210)
-let swiftUIColor = oklch.toColor()
-
-// LCH
-let lch = LCHColor(l: 70, c: 30, h: 210)
-let rgb = lch.toRGB()
-
-// Any Color to any space
-let blue = Color.blue
-blue.toOKLCH()  // OKLCHColor
-blue.toLCH()    // LCHColor
-blue.toOKLab()  // OKLabColor
-blue.toLAB()    // LABColor
-blue.toXYZ()    // XYZColor
-blue.toRGB()    // RGBColor
-```
-
-## Interpolation
-
-Smooth color transitions that don't go muddy in the middle? That's what perceptually uniform interpolation gives you:
-
-```swift
-// OKLCH interpolation (recommended)
-let a = OKLCHColor(l: 0.4, c: 0.12, h: 60)
-let b = OKLCHColor(l: 0.8, c: 0.15, h: 200)
-let mid = a.lerp(b, t: 0.5) // Smooth midpoint with shortest hue path
-
-// LCH interpolation
-let c = LCHColor(l: 40, c: 30, h: 60)
-let d = LCHColor(l: 60, c: 60, h: 90)
-let midLCH = c.lerp(d, t: 0.5)
-```
-
-## Architecture
-
-For the curious, here's how the types connect:
-
-```
-ProTheme (a color family: ramps, stops, tokens, harmonies; backed by OKLCH)
-  |-- OKLCHColor <-> OKLabColor <-> RGBColor <-> Color
-  |-- LCHColor   <-> LABColor   <-> XYZColor <-> RGBColor
-
-Color (any SwiftUI color)
-  |-- Adjustments, Harmonies, Gradients: worked out per appearance when drawn
-```
-
-- **ProTheme** — the recommended type for design tokens. Wraps OKLCH internally, so we can evolve the internals without breaking your code.
-- **OKLCHColor / OKLabColor** — OKLCH polar and OKLab cartesian forms (Ottosson's reference).
-- **LCHColor / LABColor / XYZColor** — CIELab color spaces.
-- **RGBColor** — extended sRGB, bridges to/from SwiftUI `Color`. Display P3 colors have channels below 0 or above 1.
-- **ColorRampGenerator** — builds and caches 20-stop ramps: `UniformRamp` for hues (one lightness and one chroma per stop, shared by every hue, in Display P3), the palette data for gray.
-- **Adjustments, Harmonies, Gradients** — the color functions. Each returns a `Color` that is worked out when drawn, for the current appearance (`Color+Adaptive`).
-- **Gamut, StopLadder, PaletteStop** — shared math: fitting colors into Display P3, the lightness of each stop, and recognizing palette colors so they move stop by stop.
-
-## Future Ideas
-
-Got a feature request? [Open an issue](https://github.com/metasidd/ColorTokensKit-Swift/issues) — we'd love to hear from you.
-
-- [ ] Delta E color difference API (CIE76 / CIEDE2000)
-- [ ] Non-linear lightness curves for ramp generation
-- [ ] Semantic token layer in main library (primitive -> semantic -> component)
-- [ ] Color blindness simulation (Brettel/Vienot)
-- [ ] HSL/HSV color space types
-- [ ] Display P3 gamut awareness
-- [ ] OKLCH-native palette data (currently converts from LCH)
+Got an idea or found a bug? [Open an issue](https://github.com/metasidd/ColorTokensKit-Swift/issues).
 
 ## Contributing
 
@@ -520,4 +205,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for building and testing, updating the RE
 
 ## License
 
-MIT License. See [LICENSE](/LICENSE) for details.
+MIT License. See [LICENSE](/MIT-LICENSE.txt) for details.
