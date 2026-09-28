@@ -65,10 +65,11 @@ enum GradientStops {
         var stops: [Gradient.Stop] = []
         for (index, (start, end)) in zip(colors, colors.dropFirst()).enumerated() {
             let steps = steps(from: start, to: end, blend: blend)
+            let ends = AdaptiveInputs([start, end])
             for step in 0 ..< steps {
                 let t = Double(step) / Double(steps)
                 let location = easing.location(forProgress: (Double(index) + t) / segments)
-                let color = step == 0 ? start : Color.adapting(combining: [start, end]) { resolved, _ in
+                let color = step == 0 ? start : Color.adapting(combining: ends) { resolved, _ in
                     interpolate(resolved[0], resolved[1], at: t, blend: blend)
                 }
                 stops.append(Gradient.Stop(color: color, location: location))

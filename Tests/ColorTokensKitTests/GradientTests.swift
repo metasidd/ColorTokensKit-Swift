@@ -193,6 +193,21 @@ final class GradientTests: XCTestCase {
         XCTAssertLessThan(middle.resolvedOKLCH(for: .dark).lightnessStar, 50)
     }
 
+    // MARK: - Drawing cost
+
+    // Every stop in a segment reads the same two ends. Read once per stop, a 29-stop border resolved its ends 58 times
+    // on each draw and cost about 20 times a plain gradient, so the stops share one reading per appearance.
+    func testAGradientsStopsShareOneReadingOfTheirEnds() {
+        let counter = ResolveCounter()
+        let stops = GradientStops.smooth([Color.countingBlue(counter), yellow], blend: .vivid, easing: .smooth)
+        XCTAssertGreaterThan(stops.count, 20)
+        counter.count = 0
+        for stop in stops {
+            _ = stop.color.resolvedOKLCH(for: .light)
+        }
+        XCTAssertLessThanOrEqual(counter.count, 2, "one for the first stop, which is the color itself, and one shared by the rest")
+    }
+
     // MARK: - Recipes
 
     // Each recipe is documented by the colors it makes; one that drifts from its description misleads whoever picks it.

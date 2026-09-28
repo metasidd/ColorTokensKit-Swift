@@ -6,7 +6,8 @@
 //  as `lighten()` returns a Color whose value is worked out when it is drawn: the
 //  original color is resolved for the current appearance, converted to OKLCH,
 //  adjusted, and handed back. Tokens therefore stay adaptive, and any Color (a
-//  token, a system color, a hex color) can be adjusted.
+//  token, a system color, a hex color) can be adjusted. Each appearance's result
+//  is kept, so drawing the color again in that appearance skips the work.
 //
 
 import SwiftUI
@@ -28,25 +29,31 @@ extension Color {
         combining colors: [Color],
         _ combine: @escaping @Sendable ([OKLCHColor], ColorScheme) -> OKLCHColor
     ) -> Color {
+        adapting(combining: AdaptiveInputs(colors), combine)
+    }
+
+    /// A color worked out from inputs it may share with other colors, such as the ends of a gradient segment.
+    static func adapting(
+        combining inputs: AdaptiveInputs,
+        _ combine: @escaping @Sendable ([OKLCHColor], ColorScheme) -> OKLCHColor
+    ) -> Color {
         #if canImport(AppKit)
-            let bases = colors.map { NSColor($0) }
+            let results = AppearanceCache<NSAppearance.Name, NSColor>()
             return Color(nsColor: NSColor(name: nil) { appearance in
-                var resolved: [OKLCHColor] = []
-                appearance.performAsCurrentDrawingAppearance {
-                    resolved = bases.map { OKLCHColor(resolved: $0) }
+                results.value(for: appearance.name) {
+                    NSColor(combine(inputs.colors(in: appearance), ColorScheme(appearance)))
                 }
-                return NSColor(combine(resolved, ColorScheme(appearance)))
             })
         #elseif canImport(UIKit) && !os(watchOS)
-            let bases = colors.map { UIColor($0) }
+            let results = AppearanceCache<UITraitCollection, UIColor>()
             return Color(uiColor: UIColor { traits in
-                let resolved = bases.map { OKLCHColor(resolved: $0.resolvedColor(with: traits)) }
-                return UIColor(combine(resolved, ColorScheme(traits.userInterfaceStyle) ?? .light))
+                results.value(for: traits) {
+                    UIColor(combine(inputs.colors(with: traits), ColorScheme(traits.userInterfaceStyle) ?? .light))
+                }
             })
         #else
             // watchOS always draws in dark appearance, so the color is worked out once.
-            let resolved = colors.map { OKLCHColor(resolved: UIColor($0)) }
-            return Color(uiColor: UIColor(combine(resolved, .dark)))
+            return Color(uiColor: UIColor(combine(inputs.colors, .dark)))
         #endif
     }
 

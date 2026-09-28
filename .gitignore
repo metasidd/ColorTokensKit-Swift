@@ -8,3 +8,4 @@ DerivedData/
 .netrc
 docs/
 Tests/ColorTokensKitTests/Exports/
+/Benchmarks/.build

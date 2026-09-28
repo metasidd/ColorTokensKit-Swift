@@ -13,6 +13,20 @@ swift test
 
 `swift test` also renders the README images into `Tests/ColorTokensKitTests/Exports/` (see [README images](#readme-images)). That folder is gitignored.
 
+To measure what making and drawing colors costs, run the benchmark in release:
+
+```bash
+swift run -c release --package-path Benchmarks
+```
+
+Drawing costs differ on iOS, so check there too. Build the benchmark for the simulator and run it on a booted one:
+
+```bash
+swift build -c release --package-path Benchmarks --scratch-path .build/benchmarks-ios \
+    --triple arm64-apple-ios17.0-simulator --sdk "$(xcrun --sdk iphonesimulator --show-sdk-path)"
+xcrun simctl spawn booted .build/benchmarks-ios/release/ColorTokensKitBenchmarks
+```
+
 A macOS build doesn't compile the UIKit code paths, so check the other platforms before you push anything that touches `Platform/` or `Package.swift`:
 
 ```bash
@@ -36,6 +50,7 @@ done
 | `Sources/ColorTokensKit/Gradients/` | `proGradient` and friends, blends, easing, recipes |
 | `Sources/ColorTokensKit/Platform/` | SwiftUI, UIKit and AppKit glue, including `Color.adapting` |
 | `Tests/ColorTokensKitTests/` | Tests; `Support/` has helpers; `Marketing/` renders the README images |
+| `Benchmarks/` | A separate package that measures what making and drawing colors costs, so apps never build it |
 
 ## Conventions
 
@@ -48,7 +63,9 @@ done
 **Behavior**
 - A color function must return an adaptive color, built with `Color.adapting`, never a color resolved once when it's called. Otherwise tokens break in dark mode.
 - Lightness and hue changes keep palette colors on the palette: `_600.lighten()` is exactly `_550`. Only colors that aren't on a ramp move continuously. `saturate`, `desaturate` and `blend` leave the palette on purpose.
-- Color functions run every time a color is drawn. Keep that work small, and measure changes with a release build (`swift build -c release`) rather than a debug one.
+- Color functions run every time a color is drawn. Keep that work small, and measure changes with the benchmark in a release build rather than a debug one.
+- Keep a result per appearance, never per color scheme: Increase Contrast and elevated backgrounds change colors without changing the scheme. `AppearanceCache` keys on the whole trait collection (UIKit) or appearance name (AppKit).
+- Every stop in a gradient segment adds a color SwiftUI resolves on each draw, and on iOS that resolving costs more than the library's own math. Add stops only where they change what's drawn.
 
 **Code**
 - US spelling in code and docs: color, gray, neighbor, math.
