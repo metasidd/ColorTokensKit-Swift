@@ -2,6 +2,10 @@
 import SwiftUI
 import XCTest
 
+#if canImport(UIKit) && !canImport(AppKit)
+    import UIKit
+#endif
+
 final class GradientTests: XCTestCase {
     private let blue = Color(red: 0, green: 0, blue: 1)
     private let yellow = Color(red: 1, green: 1, blue: 0)
@@ -13,6 +17,15 @@ final class GradientTests: XCTestCase {
         let start = Double(before.color.resolvedOKLCH(for: .light).alpha), end = Double(next.color.resolvedOKLCH(for: .light).alpha)
         guard next.location > before.location else { return end }
         return start + (end - start) * (location - before.location) / (next.location - before.location)
+    }
+
+    /// The color SwiftUI draws at `location`: a straight RGB blend between the stops either side.
+    private func drawnColor(at location: Double, in stops: [Gradient.Stop]) -> OKLCHColor {
+        let after = stops.firstIndex { $0.location >= location } ?? stops.count - 1
+        let before = stops[max(after - 1, 0)], next = stops[after]
+        let start = before.color.resolvedOKLCH(for: .light), end = next.color.resolvedOKLCH(for: .light)
+        guard next.location > before.location else { return end }
+        return start.toRGB().lerp(end.toRGB(), t: CGFloat((location - before.location) / (next.location - before.location))).toOKLCH()
     }
 
     /// The stop nearest a location, e.g. the middle of a two-color gradient.
@@ -75,7 +88,7 @@ final class GradientTests: XCTestCase {
     func testEasingRunsOverTheWholeGradientSoItDoesNotPauseOnEachColor() {
         let family = Color.proBlue
         let stops = GradientStops.smooth([family._300.toColor(), family._500.toColor(), family._700.toColor()], blend: .vivid, easing: .smooth)
-        let justBefore = stop(nearest: 0.45, in: stops).color.resolvedOKLCH(for: .light).lightnessStar
+        let justBefore = drawnColor(at: 0.45, in: stops).lightnessStar
         let middle = family._500.toColor().resolvedOKLCH(for: .light).lightnessStar
         XCTAssertGreaterThan(abs(justBefore - middle), 1.5)
     }
@@ -92,25 +105,39 @@ final class GradientTests: XCTestCase {
         XCTAssertLessThan((start - early) / (start - end), 0.1, "the first tenth changes less than a tenth of the way")
     }
 
-    // MARK: - Steps
+    // MARK: - Stops
 
-    // Far-apart colors need more steps to follow their path; close ones need few, which keeps drawing cheap.
-    func testDistantColorsGetMoreStepsThanCloseOnes() {
+    /// How many stops a linear gradient between two colors gets.
+    private func stopCount(from first: Color, to last: Color, blend: ProGradient.Blend = .vivid) -> Int {
+        GradientStops.smooth([first, last], blend: blend, easing: .linear).count
+    }
+
+    // Far-apart colors need stops in between to follow their path; close ones need few, which keeps drawing cheap.
+    func testDistantColorsGetMoreStopsThanCloseOnes() {
         let family = Color.proBlue
-        XCTAssertGreaterThanOrEqual(GradientStops.steps(from: blue, to: yellow, blend: .vivid), 24)
-        XCTAssertLessThanOrEqual(GradientStops.steps(from: family._100.toColor(), to: family._300.toColor(), blend: .vivid), 8)
-        XCTAssertEqual(GradientStops.steps(from: blue, to: blue, blend: .vivid), GradientStops.stepRange.lowerBound)
+        XCTAssertGreaterThanOrEqual(stopCount(from: blue, to: yellow), 8)
+        XCTAssertLessThanOrEqual(stopCount(from: family._100.toColor(), to: family._300.toColor()), 3)
+        XCTAssertEqual(stopCount(from: blue, to: blue), 2, "the same color needs nothing in between")
     }
 
     // `.rainbow` between neighboring hues is close as the crow flies but travels most of the way around the wheel.
     // Counted by the straight line between its ends it got 3 steps, and SwiftUI's blending cut across the wheel.
-    func testStepsFollowTheLengthOfThePathNotTheDistanceBetweenTheEnds() {
+    func testStopsFollowThePathNotTheDistanceBetweenTheEnds() {
         let red = Color.proRed._450.toColor(), orange = Color.proOrange._450.toColor()
-        XCTAssertLessThanOrEqual(GradientStops.steps(from: red, to: orange, blend: .vivid), 4)
-        XCTAssertGreaterThanOrEqual(GradientStops.steps(from: red, to: orange, blend: .rainbow), 24)
+        XCTAssertLessThanOrEqual(stopCount(from: red, to: orange), 3)
+        XCTAssertGreaterThanOrEqual(stopCount(from: red, to: orange, blend: .rainbow), 6)
     }
 
-    // Between two steps SwiftUI blends in its own way. The steps must be close enough that this doesn't show, even
+    // Every stop is a color SwiftUI resolves each time it draws, so a stop that doesn't change what's drawn only costs
+    // time. SwiftUI already fades opacity in a straight line, so a linear fade needs nothing in between, and an eased
+    // .edgeHighlight border needs far fewer than the 29 stops it had when stops were spaced evenly along the path.
+    func testStopsGoOnlyWhereTheyChangeWhatIsDrawn() {
+        let token = Color(light: Color.proBlue._400.toColor(), dark: Color.proBlue._400.toColor())
+        XCTAssertEqual(GradientStops.smooth(ProGradient.Recipe.fade.colors(from: token), blend: .vivid, easing: .linear).count, 2)
+        XCTAssertLessThanOrEqual(GradientStops.smooth(ProGradient.Recipe.edgeHighlight.colors(from: token), blend: .vivid, easing: .smooth).count, 11)
+    }
+
+    // Between two stops SwiftUI blends in its own way. The stops must be close enough that this doesn't show, even
     // for the most saturated pair and for the long way around: halfway between neighbors, an RGB blend stays within
     // about a just-noticeable difference (0.02) of the true path. Pure blue's corner of sRGB comes closest, at 0.022.
     func testStepsAreCloseEnoughThatSwiftUIsOwnBlendingDoesNotShow() {
@@ -131,13 +158,14 @@ final class GradientTests: XCTestCase {
     }
 
     // Every color passed in must appear exactly and in order, the middle one in the middle, with no stop doubled.
-    func testStopsRunEvenlyFromTheFirstColorToTheLast() {
+    func testStopsRunFromTheFirstColorToTheLast() {
         let pink = Color.proPink._500.toColor()
         let stops = GradientStops.smooth([blue, yellow, pink], blend: .vivid, easing: .smooth)
-        XCTAssertEqual(stops.count, GradientStops.steps(from: blue, to: yellow, blend: .vivid) + GradientStops.steps(from: yellow, to: pink, blend: .vivid) + 1)
+        let locations = stops.map(\.location)
         XCTAssertEqual(stops.first?.location, 0)
         XCTAssertEqual(stops.last?.location, 1)
-        XCTAssertEqual(stops.map(\.location), stops.map(\.location).sorted())
+        XCTAssertEqual(locations, locations.sorted())
+        XCTAssertEqual(Set(locations).count, locations.count, "a stop doubled")
         XCTAssertEqual(stop(nearest: 0.5, in: stops).color.hex(), yellow.hex())
         XCTAssertEqual(stops.first?.color.hex(), blue.hex())
         XCTAssertEqual(stops.last?.color.hex(), pink.hex())
@@ -183,14 +211,15 @@ final class GradientTests: XCTestCase {
         XCTAssertLessThan(opacity(at: 0.9, in: stops), 0.05)
     }
 
-    // A gradient between tokens stays adaptive, so it's right in both appearances.
+    // A gradient between tokens stays adaptive, so it's right in both appearances. The tokens change hue, so the
+    // gradient has stops in between to check, not just its two ends.
     func testGradientsBetweenTokensWorkInBothAppearances() {
-        let family = Color.proBlue
-        let top = Color(light: family._100.toColor(), dark: family._800.toColor())
-        let bottom = Color(light: family._300.toColor(), dark: family._600.toColor())
-        let middle = stop(nearest: 0.5, in: GradientStops.smooth([top, bottom], blend: .vivid, easing: .smooth)).color
-        XCTAssertGreaterThan(middle.resolvedOKLCH(for: .light).lightnessStar, 70)
-        XCTAssertLessThan(middle.resolvedOKLCH(for: .dark).lightnessStar, 50)
+        let top = Color(light: Color.proBlue._100.toColor(), dark: Color.proBlue._800.toColor())
+        let bottom = Color(light: Color.proYellow._300.toColor(), dark: Color.proYellow._600.toColor())
+        let middle = stop(nearest: 0.5, in: GradientStops.smooth([top, bottom], blend: .vivid, easing: .smooth))
+        XCTAssertTrue((0.01 ... 0.99).contains(middle.location), "an in-between stop")
+        XCTAssertGreaterThan(middle.color.resolvedOKLCH(for: .light).lightnessStar, 70)
+        XCTAssertLessThan(middle.color.resolvedOKLCH(for: .dark).lightnessStar, 50)
     }
 
     // MARK: - Drawing cost
@@ -200,7 +229,7 @@ final class GradientTests: XCTestCase {
     func testAGradientsStopsShareOneReadingOfTheirEnds() {
         let counter = ResolveCounter()
         let stops = GradientStops.smooth([Color.countingBlue(counter), yellow], blend: .vivid, easing: .smooth)
-        XCTAssertGreaterThan(stops.count, 20)
+        XCTAssertGreaterThan(stops.count, 5)
         counter.count = 0
         for stop in stops {
             _ = stop.color.resolvedOKLCH(for: .light)
@@ -208,7 +237,33 @@ final class GradientTests: XCTestCase {
         XCTAssertLessThanOrEqual(counter.count, 2, "one for the first stop, which is the color itself, and one shared by the rest")
     }
 
+    // A fixed color draws for almost nothing, while one that adapts costs SwiftUI a lookup on every draw. A stop between
+    // two fixed colors can't change with the appearance, so a white sheen's stops must all come out fixed. UIKit only:
+    // it hands back the same object when it resolves a fixed color, and AppKit has no cheap way to tell.
+    func testStopsBetweenFixedColorsAreFixed() {
+        #if canImport(UIKit) && !canImport(AppKit) && !os(watchOS)
+            let stops = GradientStops.smooth(ProGradient.Recipe.sheen.colors(from: .white), blend: .vivid, easing: .smooth)
+            let traits = UITraitCollection(userInterfaceStyle: .dark)
+            for stop in stops {
+                let platformColor = UIColor(stop.color)
+                XCTAssertTrue(platformColor.resolvedColor(with: traits) === platformColor, "the stop at \(stop.location) adapts")
+            }
+        #endif
+    }
+
     // MARK: - Recipes
+
+    // The fading recipes promise the color SwiftUI's opacity(_:) draws. On iOS a token fades through the library instead,
+    // which is cheaper to draw, and that must not change the color.
+    func testFadingRecipesDrawSwiftUIsOpacity() {
+        let token = Color(light: Color.proBlue._300.toColor(), dark: Color.proBlue._600.toColor())
+        let faint = ProGradient.Recipe.edgeHighlight.colors(from: token)[0]
+        for colorScheme in [ColorScheme.light, .dark] {
+            let ours = faint.resolvedOKLCH(for: colorScheme), swiftUIs = token.opacity(0.15).resolvedOKLCH(for: colorScheme)
+            XCTAssertEqual(ours.hex, swiftUIs.hex, "\(colorScheme)")
+            XCTAssertEqual(Double(ours.alpha), Double(swiftUIs.alpha), accuracy: 0.001, "\(colorScheme)")
+        }
+    }
 
     // Each recipe is documented by the colors it makes; one that drifts from its description misleads whoever picks it.
     func testRecipesMakeTheColorsTheyDescribe() {
