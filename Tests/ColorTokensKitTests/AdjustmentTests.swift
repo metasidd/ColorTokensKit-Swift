@@ -124,4 +124,17 @@ final class AdjustmentTests: XCTestCase {
         XCTAssertEqual(Double(surface.lighten().resolvedOKLCH(for: .light).alpha), 0.5, accuracy: 0.01)
         XCTAssertEqual(Double(surface.rotateHue(by: .degrees(90)).resolvedOKLCH(for: .light).alpha), 0.5, accuracy: 0.01)
     }
+
+    // MARK: - Appearances
+
+    // Increase Contrast changes many colors, system colors among them, without changing the color scheme. A result kept
+    // for one appearance must never be reused for another, or someone who turned Increase Contrast on would see the
+    // standard color.
+    func testEachAppearanceGetsItsOwnResult() {
+        let standard = blue._400.toColor().resolvedOKLCH(for: .light)
+        let alternate = blue._700.toColor().resolvedOKLCH(for: .light)
+        let softened = Color.changingWithAppearance(standard: standard, alternate: alternate).soften()
+        XCTAssertEqual(softened.hex(.light), blue._350.toColor().hex())
+        XCTAssertEqual(softened.alternateLightHex(), blue._650.toColor().hex())
+    }
 }

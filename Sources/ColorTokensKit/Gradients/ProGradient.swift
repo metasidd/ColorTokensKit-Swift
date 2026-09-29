@@ -21,6 +21,12 @@
 
 import SwiftUI
 
+#if canImport(UIKit) && !canImport(AppKit) && !os(watchOS)
+    import UIKit
+
+    private let lightTraits = UITraitCollection(userInterfaceStyle: .light)
+#endif
+
 /// Options for the `proGradient`, `proRadialGradient` and `proAngularGradient` functions:
 /// how they blend between colors, how they ease from first to last, and recipes for one color.
 public enum ProGradient {
@@ -77,6 +83,19 @@ public enum ProGradient {
             return bezier((low + high) / 2, x1, x2)
         }
 
+        /// How far the colors are from the first to the last (0…1) at `location` along the gradient (0…1).
+        func progress(atLocation location: Double) -> Double {
+            if location <= 0 { return 0 }
+            if location >= 1 { return 1 }
+            guard self != .linear else { return location }
+            var low = 0.0, high = 1.0
+            for _ in 0 ..< 40 {
+                let t = (low + high) / 2
+                if bezier(t, x1, x2) < location { low = t } else { high = t }
+            }
+            return bezier((low + high) / 2, y1, y2)
+        }
+
         /// One coordinate of the cubic Bézier from (0, 0) to (1, 1) at parameter `t`.
         private func bezier(_ t: Double, _ first: Double, _ second: Double) -> Double {
             let u = 1 - t
@@ -123,7 +142,7 @@ public extension ProGradient.Recipe {
 
     /// The color fading to transparent, for glows, scrims and edges.
     static var fade: Self {
-        Self { [$0, $0.opacity(0)] }
+        Self { [$0, $0.scalingOpacity(by: 0)] }
     }
 
     /// Two stops lighter to two stops darker, for depth.
@@ -138,16 +157,30 @@ public extension ProGradient.Recipe {
 
     /// A light, translucent tint that deepens toward the end: a soft backdrop for cards.
     static var wash: Self {
-        Self { [$0.opacity(0.1), $0.opacity(0.3)] }
+        Self { [$0.scalingOpacity(by: 0.1), $0.scalingOpacity(by: 0.3)] }
     }
 
     /// A band of the color across the middle, clear at both ends. Use white for a shine.
     static var sheen: Self {
-        Self { [$0.opacity(0), $0.opacity(0.5), $0.opacity(0)] }
+        Self { [$0.scalingOpacity(by: 0), $0.scalingOpacity(by: 0.5), $0.scalingOpacity(by: 0)] }
     }
 
     /// Strongest in the middle and faint at the ends, for highlighted borders.
     static var edgeHighlight: Self {
-        Self { [$0.opacity(0.15), $0, $0.opacity(0.15)] }
+        Self { [$0.scalingOpacity(by: 0.15), $0, $0.scalingOpacity(by: 0.15)] }
+    }
+}
+
+private extension Color {
+    /// The color `opacity(_:)` draws. A gradient reads an `opacity(_:)` token back through SwiftUI, about fifteen times the
+    /// cost of a token, so on iOS a color that changes with the appearance fades through `adapting` instead.
+    func scalingOpacity(by opacity: Double) -> Color {
+        #if canImport(UIKit) && !canImport(AppKit) && !os(watchOS)
+            let platformColor = UIColor(self)
+            if platformColor.resolvedColor(with: lightTraits) !== platformColor {
+                return adapting { color, _ in OKLCHColor(l: color.l, c: color.c, h: color.h, alpha: color.alpha * CGFloat(opacity)) }
+            }
+        #endif
+        return self.opacity(opacity)
     }
 }
